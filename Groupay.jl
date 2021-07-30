@@ -454,6 +454,10 @@ function gen_soln(payGrp::PayGroup)
     payers = []
     receivers = []
     for (name, member) in payGrp.members
+        if isempty(member.hasPaid) 
+            continue
+        end
+            
         tmpToPay = get_toPay(member)
         if tmpToPay == 0
             continue
@@ -519,8 +523,7 @@ print_soln(x::PayGroup) = print_soln(gen_soln(x))
 
 """
 function main_groupay()
-    run(`clear`) # clear screen
-    # welcome
+    run(`clear`)
     println("Hi, there! Welcome to happy ~\e[32m group pay \e[0m~")
     println("We will provide you a payment solution for your group.")
     println()
