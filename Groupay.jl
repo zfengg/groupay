@@ -49,6 +49,10 @@ end
 """
 function print_member(m::Member)
     println("[\e[36m", m.name, "\e[0m]")
+    if isempty(m.hasPaid)
+        println("\e[35m No record yet.\e[0m\n")
+        return nothing
+    end
     println("-- has paid")
     for (k, v) in m.hasPaid
         println("\e[33m", k, "\e[0m : ", v)
@@ -304,10 +308,19 @@ function add_bills!(payGrp::PayGroup)
     for x in keys(payGrp.members)
         println("\e[36m", x, "\e[0m")
     end
-    println("Then let's review your bills together.")
+    if ! isempty(payGrp.billMetaInfo)
+        println("And you have added the following bills:")
+        for billname in keys(payGrp.billMetaInfo)
+            println("\e[33m", billname, "\e[0m") 
+        end
+        println()
+        println("What's your next bill to add?")
+    else
+        println("Then let's review your bills together.")
+        println()
+        println("What's your first bill to add?")
+    end
 
-    println()
-    println("What's your first bill to add?")
     countBills = 1
     while true
         # meta info
@@ -541,6 +554,8 @@ end
 # IO via JLD2
 using JLD2: save_object, load_object
 save_paygrp(f::String, g::PayGroup) = save_object(f, g)
+save_paygrp(g::PayGroup) = save_paygrp("groupay.jld2", g)
 load_paygrp(f::String) = load_object(f)
+load_paygrp() = load_paygrp("groupay.jld2")
 
 end # module

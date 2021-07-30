@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-include("groupay.jl")
+include("Groupay.jl")
 using .Groupay
 
 payGrp = load_paygrp("groupay.jld2")
