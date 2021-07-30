@@ -193,7 +193,7 @@ function add_bills!(payGrp::PayGroup)
                 billname = readline()
             end
 
-            println("And how much have you paid?")
+            println("And how much have you paid for \e[33m", billname, "\e[0m?")
             tempExpr = Meta.parse(readline())
             payTotal = eval(tempExpr) |> Float64
             println(tempExpr, " = ", payTotal)
