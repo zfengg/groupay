@@ -75,7 +75,8 @@ function gen_paygrp()
             println("Please add the names of the others:")
         else
             if length(members) == 1
-                println("Cheer up! No shame being alone ~")
+                println("Oh~ You are the only one in the group.")
+                println("Don't worry! We will accompany you. ^_^")
             end
             break
         end
