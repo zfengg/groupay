@@ -156,14 +156,15 @@ function print_bills(x::PayGroup)
     println("\n======\n")
 
     println("Group: \e[91m", x.title, "\e[0m")
-    println("Date: \e[95m", x.date, "\e[0m\n")
+    println("Date: \e[95m", x.date, "\e[0m")
     print("Members: \e[36m")
     for name in keys(x.members)
         print(name, " ")
     end
     print("\e[0m\n")
     println("Total: \e[92m", sum(i[1] for i in values(x.billMetaInfo)), "\e[0m")
-    
+    println()
+
     for billname in keys(x.billDetails)
         print_bill(x, billname)
     end
@@ -211,9 +212,9 @@ function add_bills!(payGrp::PayGroup)
                     payTotal = eval(tempExpr) |> Float64
                     println(tempExpr, " = ", payTotal)
                     break
-                catch 
-                    println("Oops, your money input is \e[31minvalid\e[0m!")
-                    println("Please input a \e[32mnumber\e[0m or \e[32mmath-expression\e[0m:")
+                catch
+                    print("Oops, \e[31minvalid\e[0m money input! ")
+                    print("Please input a \e[32mnumber\e[0m or \e[32mmath-expression\e[0m:\n")
                 end
             end
             for (name, member) in payGrp.members
@@ -240,6 +241,7 @@ function add_bills!(payGrp::PayGroup)
             else
                 countBills += 1
                 println()
+                println("(\e[32mTip:\e[0m Overwrite \e[32many\e[0m previous bill by inputting the same name.)\n")
                 println("What's your next bill?")
             end
         end
@@ -281,9 +283,9 @@ function add_bills!(payGrp::PayGroup)
                 payTotal = eval(tempExpr) |> Float64
                 println(tempExpr, " = ", payTotal)
                 break
-            catch 
-                println("Oops, your money input is \e[31minvalid\e[0m!")
-                println("Please input a \e[32mnumber\e[0m or \e[32mmath-expression\e[0m:")
+            catch
+                print("Oops, \e[31minvalid\e[0m money input! ")
+                print("Please input a \e[32mnumber\e[0m or \e[32mmath-expression\e[0m:\n")
             end
         end
         for (name, member) in payGrp.members
@@ -312,7 +314,7 @@ function add_bills!(payGrp::PayGroup)
                             tmpShouldPay = eval(tempExpr) |> Float64
                             println(tempExpr, " = ", tmpShouldPay)
                             break
-                        catch 
+                        catch
                             println("\e[31mInvalid\e[0m number expression!")
                             print("\e[36m", name, "\e[0m : ")
                         end
@@ -371,6 +373,7 @@ function add_bills!(payGrp::PayGroup)
         else
             countBills += 1
             println()
+            println("(\e[32mTip:\e[0m Overwrite \e[32many\e[0m previous bill by inputting the same name.)\n")
             println("What's your next bill?")
         end
     end
