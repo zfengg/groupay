@@ -180,7 +180,7 @@ function add_bills!(payGrp::PayGroup)
             payMan = x
         end
         println("Then let's review your bills together.")
-    
+
         println()
         println("What's your first bill to add?")
         countBills = 1
@@ -204,7 +204,7 @@ function add_bills!(payGrp::PayGroup)
                     push!(member.hasPaid, billname => 0.)
                 end
             end
-    
+
             isAA = true
             push!(payGrp.members[payMan].shouldPay, billname => payTotal)
             push!(payGrp.billMetaInfo, billname => (payTotal, payMan, isAA))
@@ -212,7 +212,7 @@ function add_bills!(payGrp::PayGroup)
             push!(payGrp.billDetails, billname => billDetails)
             println()
             print_bill(payGrp, billname)
-    
+
             println()
             println("And do you have another bill?([y]/n)")
             hasNextBill = readline()
@@ -224,7 +224,7 @@ function add_bills!(payGrp::PayGroup)
                 println("What's your next bill?")
             end
         end
-        return payGrp 
+        return payGrp
     end
 
     println("Ok, nice to meet you all!")
