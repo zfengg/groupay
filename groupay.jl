@@ -333,6 +333,8 @@ end
 
 
 # ---------------------------------- main() ---------------------------------- #
+run(`clear`) # clear screen
+
 # welcome
 println("Hi, there! Welcome to happy ~\e[32m group pay \e[0m~")
 println("We will provide you a payment solution for your group.")
