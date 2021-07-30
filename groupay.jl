@@ -154,6 +154,16 @@ end
 
 function print_bills(x::PayGroup)
     println("\n======\n")
+
+    println("Group: \e[91m", x.title, "\e[0m")
+    print("Members: \e[36m")
+    for name in keys(x.members)
+        print(name, " ")
+    end
+    print("\e[0m\n")
+    println("Total: \e[92m", sum(i[1] for i in values(x.billMetaInfo)), "\e[0m")
+    println("Date: \e[95m", x.date, "\e[0m\n")
+    
     for billname in keys(x.billDetails)
         print_bill(x, billname)
     end
