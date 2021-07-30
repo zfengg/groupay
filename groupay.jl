@@ -32,6 +32,8 @@ function print_member(m::Member)
     println("total = \e[31m", sum(values(m.shouldPay)), "\e[0m")
     println("-- remains to pay: \e[35m", get_toPay(m), "\e[0m\n")
 end
+print_member(g::PayGroup, s::String) = print_member(g.members[s])
+print_member(s::String) = print_member(payGrp, s)
 
 # PayGroup
 mutable struct PayGroup
@@ -151,6 +153,7 @@ function print_bill(x::PayGroup, billname::String)
     end
     println()
 end
+print_bill(s::String) = print_bill(payGrp, s)
 
 function print_bills(x::PayGroup)
     println("\n======\n")
@@ -170,6 +173,7 @@ function print_bills(x::PayGroup)
     end
     println("======\n")
 end
+print_bills() = print_bills(payGrp)
 
 function print_members(x::PayGroup)
     println("\n======\n")
@@ -178,6 +182,7 @@ function print_members(x::PayGroup)
     end
     println("======\n")
 end
+print_members() = print_members(payGrp)
 
 
 function add_bills!(payGrp::PayGroup)
