@@ -438,6 +438,7 @@ function print_soln(soln)
     end
     println()
 end
+print_soln(x::PayGroup) = print_soln(gen_soln(x))
 
 
 # ---------------------------------- main() ---------------------------------- #
