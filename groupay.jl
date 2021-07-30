@@ -204,9 +204,18 @@ function add_bills!(payGrp::PayGroup)
             end
 
             println("And how much have you paid for \e[33m", billname, "\e[0m?")
-            tempExpr = Meta.parse(readline())
-            payTotal = eval(tempExpr) |> Float64
-            println(tempExpr, " = ", payTotal)
+            payTotal = undef
+            while true
+                try
+                    tempExpr = Meta.parse(readline())
+                    payTotal = eval(tempExpr) |> Float64
+                    println(tempExpr, " = ", payTotal)
+                    break
+                catch 
+                    println("Oops, your money input is \e[31minvalid\e[0m!")
+                    println("Please input a \e[32mnumber\e[0m or \e[32mmath-expression\e[0m:")
+                end
+            end
             for (name, member) in payGrp.members
                 if name == payMan
                     push!(member.hasPaid, billname => payTotal)
@@ -265,9 +274,18 @@ function add_bills!(payGrp::PayGroup)
             end
         end
         println("And how much has \e[36m", payMan, "\e[0m paid?")
-        tempExpr = Meta.parse(readline())
-        payTotal = eval(tempExpr) |> Float64
-        println(tempExpr, " = ", payTotal)
+        payTotal = undef
+        while true
+            try
+                tempExpr = Meta.parse(readline())
+                payTotal = eval(tempExpr) |> Float64
+                println(tempExpr, " = ", payTotal)
+                break
+            catch 
+                println("Oops, your money input is \e[31minvalid\e[0m!")
+                println("Please input a \e[32mnumber\e[0m or \e[32mmath-expression\e[0m:")
+            end
+        end
         for (name, member) in payGrp.members
             if name == payMan
                 push!(member.hasPaid, billname => payTotal)
@@ -287,16 +305,26 @@ function add_bills!(payGrp::PayGroup)
                 println("How much should each member pay?")
                 for (name, member) in tmpMembers
                     print("\e[36m", name, "\e[0m : ")
-                    tempExpr = Meta.parse(readline())
-                    tmpShouldPay = eval(tempExpr) |> Float64
-                    println(tempExpr, " = ", tmpShouldPay)
+                    tmpShouldPay = undef
+                    while true
+                        try
+                            tempExpr = Meta.parse(readline())
+                            tmpShouldPay = eval(tempExpr) |> Float64
+                            println(tempExpr, " = ", tmpShouldPay)
+                            break
+                        catch 
+                            println("\e[31mInvalid\e[0m number expression!")
+                            print("\e[36m", name, "\e[0m : ")
+                        end
+                    end
                     push!(member.shouldPay, billname => tmpShouldPay)
                 end
 
                 billDetails = get_bill_details(tmpMembers, billname)
                 if payTotal != sum(values(billDetails))
                     println()
-                    println("Oops! It doesn't sum up to the total payment! Please input again.")
+                    println("Oops! The sum of money doesn't match the total \e[32m", payTotal, "\e[0m!")
+                    println("Please input again.")
                 else
                     payGrp.members = tmpMembers
                     break
