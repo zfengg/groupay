@@ -76,7 +76,7 @@ function gen_paygrp()
         else
             if length(members) == 1
                 println("Oh~ You are the only one in the group.")
-                println("Don't worry! We will accompany you. ^_^")
+                println("Good, we will accompany you. ^_^")
             end
             break
         end
@@ -168,8 +168,65 @@ function print_members(x::PayGroup)
     println("======\n")
 end
 
+
 function add_bills!(payGrp::PayGroup)
     println()
+
+    if length(payGrp.members) == 1
+        println("Ok, nice to meet you!")
+        payMan = undef
+        for x in keys(payGrp.members)
+            println("\e[36m", x, "\e[0m")
+            payMan = x
+        end
+        println("Then let's review your bills together.")
+    
+        println()
+        println("What's your first bill to add?")
+        countBills = 1
+        while true
+            # meta info
+            billname = readline()
+            while isempty(billname)
+                println("It's better to give the bill a name, right? ^o^")
+                println("So please name your bill:")
+                billname = readline()
+            end
+
+            println("And how much have you paid?")
+            tempExpr = Meta.parse(readline())
+            payTotal = eval(tempExpr) |> Float64
+            println(tempExpr, " = ", payTotal)
+            for (name, member) in payGrp.members
+                if name == payMan
+                    push!(member.hasPaid, billname => payTotal)
+                else
+                    push!(member.hasPaid, billname => 0.)
+                end
+            end
+    
+            isAA = true
+            push!(payGrp.members[payMan].shouldPay, billname => payTotal)
+            push!(payGrp.billMetaInfo, billname => (payTotal, payMan, isAA))
+            billDetails = Dict(payMan => payTotal)
+            push!(payGrp.billDetails, billname => billDetails)
+            println()
+            print_bill(payGrp, billname)
+    
+            println()
+            println("And do you have another bill?([y]/n)")
+            hasNextBill = readline()
+            if hasNextBill == "n"
+                break
+            else
+                countBills += 1
+                println()
+                println("What's your next bill?")
+            end
+        end
+        return payGrp 
+    end
+
     println("Ok, nice to meet you all!")
     for x in keys(payGrp.members)
         println("\e[36m", x, "\e[0m")
@@ -296,6 +353,11 @@ function gen_soln(payGrp::PayGroup)
             push!(receivers, (name, -tmpToPay))
         end
     end
+
+    if isempty(payers)
+        return [("Everyone", "happy", 0)]
+    end
+
     payers = sort(payers; by=x -> x[2])
     receivers = sort(receivers; by=x -> x[2])
     if abs(sum(map(x -> x[2], payers)) - sum(map(x -> x[2], receivers))) > 0.01
@@ -326,8 +388,12 @@ end
 
 function print_soln(soln)
     println("\nTada! Here is a \e[32mpayment solution\e[0m :)\n")
-    for tuple in soln
-        println("\e[36m", tuple[1], "\e[0m => \e[36m", tuple[2], "\e[0m : ", tuple[3])
+    if soln[1][3] == 0
+        println("\e[36m Congrats! Everyone is happy. \e[0m")
+    else
+        for tuple in soln
+            println("\e[36m", tuple[1], "\e[0m => \e[36m", tuple[2], "\e[0m : ", tuple[3])
+        end
     end
     println()
 end
