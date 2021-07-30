@@ -18,6 +18,17 @@ mutable struct Member
 end
 get_toPay(m::Member) = sum(values(m.shouldPay)) - sum(values(m.hasPaid))
 
+# PayGroup
+mutable struct PayGroup
+    title::String
+    date::Date
+    members::Dict
+    billMetaInfo::Dict
+    billDetails::Dict
+    PayGroup(title::String, date::Date) = new(title, date, Dict(), Dict(), Dict())
+    PayGroup(title::String) = PayGroup(title, Dates.today())
+end
+
 function print_member(m::Member)
     println("[\e[36m", m.name, "\e[0m]")
     println("-- has paid")
@@ -34,17 +45,6 @@ function print_member(m::Member)
 end
 print_member(g::PayGroup, s::String) = print_member(g.members[s])
 print_member(s::String) = print_member(payGrp, s)
-
-# PayGroup
-mutable struct PayGroup
-    title::String
-    date::Date
-    members::Dict
-    billMetaInfo::Dict
-    billDetails::Dict
-    PayGroup(title::String, date::Date) = new(title, date, Dict(), Dict(), Dict())
-    PayGroup(title::String) = PayGroup(title, Dates.today())
-end
 
 function gen_paygrp()
     println("What's the name of your group?")
