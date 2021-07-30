@@ -11,8 +11,9 @@ module Groupay
 using Dates
 
 export Member, PayGroup
-export main_groupay, gen_paygrp, add_bills!, add_members!
+export main_groupay, gen_paygrp, add_bills!, add_member!
 export print_member, print_bill, print_soln
+export save_paygrp, load_paygrp
 
 # ---------------------------------------------------------------------------- #
 """
@@ -29,9 +30,7 @@ get_toPay(m::Member) = sum(values(m.shouldPay)) - sum(values(m.hasPaid))
 """
     PayGroup
 
-    The major object to handle with.
-
-    The suggested variable name for an instance is `payGrp`.
+    The object contains all the information about group payment.
 """
 mutable struct PayGroup
     title::String
@@ -62,14 +61,14 @@ function print_member(m::Member)
     println("total = \e[31m", sum(values(m.shouldPay)), "\e[0m")
     println("-- remains to pay: \e[35m", get_toPay(m), "\e[0m\n")
 end
-print_member(s::String, g::PayGroup=payGrp) = print_member(g.members[s])
+print_member(s::String, g::PayGroup) = print_member(g.members[s])
 
 """
-    print_member(x::PayGroup=payGrp)
+    print_member(x::PayGroup)
 
     Print payment information for all the members in `x::PayGroup`.
 """
-function print_member(x::PayGroup=payGrp)
+function print_member(x::PayGroup)
     println("\n======\n")
     for member in values(x.members)
         print_member(member)
@@ -128,18 +127,18 @@ function gen_paygrp()
 end
 
 """
-    add_members!(x::PayGroup) -> x::PayGroup
+    add_member!(x::PayGroup) -> x::PayGroup
 
     Add more members to a `PayGroup` interactively.
 """
-function add_members!(payGrp::PayGroup)
+function add_member!(payGrp::PayGroup)
     println("Here are the members in \e[31m", payGrp.title, "\e[0m:")
     for x in keys(payGrp.members)
         println("\e[36m", x, "\e[0m")
     end
 
     println("Who else do you want to add?")
-    println("Warning: Repeated names may crash the whole process ^_^!")
+    println("\e[31mWarning\e[0m: Repeated names may crash the whole process ^_^!")
     addMembers = String[]
     while true
         membersTmp = readline()
@@ -183,11 +182,11 @@ end
 get_bill_details(x::PayGroup, billname::String) = get_bill_details(x.members, billname)
 
 """
-    print_bill(billname::String, x::PayGroup=payGrp)
+    print_bill(billname::String, x::PayGroup)
 
     Print the information of bills.
 """
-function print_bill(billname::String, x::PayGroup=payGrp)
+function print_bill(billname::String, x::PayGroup)
     println("[\e[33m", billname, "\e[0m]")
     payTotal = x.billMetaInfo[billname][1]
     payMan = x.billMetaInfo[billname][2]
@@ -204,12 +203,12 @@ function print_bill(billname::String, x::PayGroup=payGrp)
 end
 
 """
-    print_bill(x::PayGroup=payGrp)
+    print_bill(x::PayGroup)
 
     Print the information of all the bills in `x::PayGroup`.
 
 """
-function print_bill(x::PayGroup=payGrp)
+function print_bill(x::PayGroup)
     println("\n======\n")
 
     println("Group: \e[91m", x.title, "\e[0m")
@@ -229,11 +228,11 @@ function print_bill(x::PayGroup=payGrp)
 end
 
 """
-    add_bills!(payGrp::PayGroup=payGrp) -> payGrp::PayGroup
+    add_bills!(payGrp::PayGroup) -> payGrp::PayGroup
 
     Add bills to a `PayGroup`.
 """
-function add_bills!(payGrp::PayGroup=payGrp)
+function add_bills!(payGrp::PayGroup)
     println()
 
     if length(payGrp.members) == 1
@@ -284,7 +283,7 @@ function add_bills!(payGrp::PayGroup=payGrp)
             billDetails = Dict(payMan => payTotal)
             push!(payGrp.billDetails, billname => billDetails)
             println()
-            print_bill(billname)
+            print_bill(billname, payGrp)
 
             println()
             println("And do you have another bill?([y]/n)")
@@ -416,7 +415,7 @@ function add_bills!(payGrp::PayGroup=payGrp)
         billDetails = get_bill_details(payGrp, billname)
         push!(payGrp.billDetails, billname => billDetails)
         println()
-        print_bill(billname)
+        print_bill(billname, payGrp)
 
         println()
         println("And do you have another bill?([y]/n)")
@@ -498,7 +497,7 @@ function print_soln(soln)
     end
     println()
 end
-print_soln(x::PayGroup=payGrp) = print_soln(gen_soln(x))
+print_soln(x::PayGroup) = print_soln(gen_soln(x))
 
 """
     main_groupay() -> payGrp::PayGroup
