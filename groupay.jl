@@ -135,13 +135,14 @@ end
     Add more members to a `PayGroup` interactively.
 """
 function add_member!(payGrp::PayGroup)
-    println("Here are the members in \e[31m", payGrp.title, "\e[0m:")
+    println("Let's add more members!")
+    println("Current members in \e[31m", payGrp.title, "\e[0m:")
     for x in keys(payGrp.members)
         println("\e[36m", x, "\e[0m")
     end
 
+    println("\n(\e[31mWarning\e[0m: Repeated names may crash the whole process ^_^!)\n")
     println("Who else do you want to add?")
-    println("\e[31mWarning\e[0m: Repeated names may crash the whole process ^_^!")
     addMembers = String[]
     while true
         membersTmp = readline()
@@ -165,6 +166,11 @@ function add_member!(payGrp::PayGroup)
 
     for name in addMembers
         push!(payGrp.members, name => Member(name))
+    end
+
+    println("\nUpdated members in \e[31m", payGrp.title, "\e[0m:")
+    for x in keys(payGrp.members)
+        println("\e[36m", x, "\e[0m")
     end
 
     return payGrp
@@ -515,12 +521,13 @@ function print_soln(soln)
 end
 print_soln(x::PayGroup) = print_soln(gen_soln(x))
 
-# # IO via JLD2
-# using JLD2: save_object, load_object
-# save_paygrp(f::String, g::PayGroup) = save_object(f, g)
-# save_paygrp(g::PayGroup) = save_paygrp("groupay.jld2", g)
-# load_paygrp(f::String) = load_object(f)
-# load_paygrp() = load_paygrp("groupay.jld2")
+# IO via JLD2
+using JLD2: save_object, load_object
+save_paygrp(f::String, g::PayGroup) = save_object(f, g)
+save_paygrp(g::PayGroup) = save_paygrp("groupay.jld2", g)
+load_paygrp(f::String) = load_object(f)
+load_paygrp() = load_paygrp("groupay.jld2")
+export save_paygrp, load_paygrp
 
 end # module
 
@@ -554,9 +561,57 @@ end
 print_soln(payGrp)
 # the end
 println()
-println("Have a good day ~")
-
-bill = print_bill
-mem = print_member
-sol = print_soln
+println("Continue to check out info?(y/[n])")
+willContinue = readline()
+if willContinue != "y"
+    println()
+    println("Have a good day ~")
+    exit()
+end
+# continue
+manual = [
+    ("g", "the alias for your group")
+    ("s()", "show payment solution")
+    ("b()", "show all bills")
+    ("b(\"x\")", "show bill with name \e[33mx\e[0m")
+    ("m()", "show bills of all members")
+    ("m(\"x\")", "show bills of member \e[36mx\e[0m")
+    ("am()", "add members to your group")
+    ("ab()", "add bills to your group")
+    ("sg()", "save your group")
+    ("lg()", "load your group")
+]
+## cmds
+"the alias for your group"
 g = payGrp
+"show payment solution"
+s() = print_soln(g)
+"show all bills"
+b() = print_bill(g)
+"show bill with name `x`"
+b(x::String) = print_bill(x, g)
+"show bills of all members"
+m() = print_member(g)
+"show bills of member \e[36mx\e[0m"
+m(x::String) = print_member(x, g)
+"add members to your group"
+am() = add_member!(g)
+"add bills to your group"
+ab() = add_bills!(g)
+"save your group"
+sg() = save_paygrp(g)
+"load your group"
+lg() = load_paygrp(g)
+
+function print_manual(man)
+    println("")
+    println("\e[35mCommand manual\e[0m:")
+    for cmd in man
+        println("  \e[32m", cmd[1], "\e[0m : ", cmd[2])
+    end
+    println("Get help by \e[33m?\e[0m e.g., \e[33m?s\e[0m")
+    println("\nNote: You can stop at anytime by preshing the \e[36mStop\e[0m button.\n")
+end
+
+print_manual(manual)
+
