@@ -661,7 +661,7 @@ sg() = save_paygrp(g)
 
 load your group
 """
-lg() = load_paygrp(g)
+lg() = load_paygrp("groupay.jld2")
 
 function print_manual(man)
     println("")
