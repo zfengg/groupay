@@ -613,4 +613,3 @@ function print_manual(man)
 end
 
 print_manual(manual)
-
