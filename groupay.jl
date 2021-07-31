@@ -588,25 +588,74 @@ manual = [
     ("lg()", "load your group")
 ]
 ## cmds
-"the alias for your group"
+"""
+    g::PayGroup
+
+the alias for your group
+"""
 g = payGrp
-"show payment solution"
+
+"""
+    s()
+
+show payment solution
+"""
 s() = print_soln(g)
-"show all bills"
+
+"""
+    b()
+
+show all bills
+"""
 b() = print_bill(g)
-"show bill with name `x`"
+
+"""
+    b(x::String)
+
+show bill with name \e[33mx\e[0m
+"""
 b(x::String) = print_bill(x, g)
-"show bills of all members"
+
+"""
+    m()
+
+show bills of all members
+"""
 m() = print_member(g)
-"show bills of member \e[36mx\e[0m"
+
+"""
+    m(x::String)
+
+show bills of member \e[36mx\e[0m
+"""
 m(x::String) = print_member(x, g)
-"add members to your group"
+
+"""
+    am()
+
+add members to your group
+"""
 am() = add_member!(g)
-"add bills to your group"
+
+"""
+    ab()
+
+add bills to your group
+"""
 ab() = add_bills!(g)
-"save your group"
+
+"""
+    sg()
+
+save your group
+"""
 sg() = save_paygrp(g)
-"load your group"
+
+"""
+    lg()
+
+load your group
+"""
 lg() = load_paygrp(g)
 
 function print_manual(man)
