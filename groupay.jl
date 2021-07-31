@@ -1,11 +1,15 @@
-#!/usr/bin/env julia
-
 # ---------------------------------------------------------------------------- #
-# groupay.jl :  A simple interactive group payment solution.
+#       ______                                  
+#      / ____/________  __  ______  ____ ___  __
+#     / / __/ ___/ __ \/ / / / __ \/ __ `/ / / /
+#    / /_/ / /  / /_/ / /_/ / /_/ / /_/ / /_/ / 
+#    \____/_/   \____/\__,_/ .___/\__,_/\__, /  
+#                         /_/          /____/   
+#              
+#   A simple interactive group payment solution.
 #
-# Copyright: Zhou Feng @ https://github.com/zfengg/toolkit/tree/master/julia
+# Copyright: Zhou Feng @ https://github.com/zfengg/groupay
 # ---------------------------------------------------------------------------- #
-
 module Groupay
 
 using Dates
