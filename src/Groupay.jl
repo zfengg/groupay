@@ -129,6 +129,20 @@ end
     Generate a `PayGroup` interactively.
 """
 function gen_paygrp()
+    if isfile("groupay.jld2")
+        println("A saved \e[32mPayGroup\e[0m has been detected!")    
+        println("Do you want to load it?([y]/n)")
+        shouldLoad = readline()
+        if shouldLoad == "n" 
+            println("Then let's start a new group.") 
+        else
+            payGrp = load_paygrp("groupay.jld2")
+            println("The saved group has been loaded! ^_^")
+            payGrp = add_member!(payGrp)
+            return payGrp
+        end
+    end
+
     println("What's the name of your group?")
     title = readline()
     while isempty(title)
@@ -179,13 +193,17 @@ end
     Add more members to a `PayGroup` interactively.
 """
 function add_member!(payGrp::PayGroup)
-    println("Let's add more members!")
     println("Current members in \e[31m", payGrp.title, "\e[0m:")
     for x in keys(payGrp.members) # TODO: keys()
         println("\e[36m", x, "\e[0m")
     end
+    println("\nDo you want to add more members?([y]/n)")
+    shouldAddMem = readline()
+    if shouldAddMem == "n"
+        return payGrp
+    end
 
-    println("\n(\e[31mWarning\e[0m: Repeated names may crash the whole process ^_^!)\n")
+    println("\n(\e[31mWarning\e[0m: Repeated names may crash the whole process!)\n")
     println("Who else do you want to add?")
     addMembers = String[]
     while true
@@ -291,7 +309,7 @@ function add_bills!(payGrp::PayGroup)
         end
 
         if ! isempty(payGrp.bills)
-            println("And you have added the following bills:")
+            println("And the following bills are added:")
             for (date, dateBills) in payGrp.bills
                 println("< \e[93m", date, "\e[0m >")
                 for billname in keys(dateBills)
@@ -329,12 +347,22 @@ function add_bills!(payGrp::PayGroup)
                     print("Please input a \e[32mnumber\e[0m or \e[32mmath-expression\e[0m:\n")
                 end
             end
-            push!(payGrp.members[payMan].hasPaid, today() => Dict(billname => payTotal))
+            tmpMemHasPaid = payGrp.members[payMan].hasPaid
+            if haskey(tmpMemHasPaid, today())
+                push!(tmpMemHasPaid[today()], billname => payTotal)
+            else
+                push!(tmpMemHasPaid, today() => Dict(billname => payTotal))
+            end
             bill.total = payTotal
             bill.isAA = true
             bill.paidPy = payMan
             push!(bill.shouldPay, bill.paidPy => bill.total)
-            push!(payGrp.members[payMan].shouldPay, today() => Dict(billname => payTotal))
+            tmpMemShouldPay = payGrp.members[payMan].shouldPay
+            if haskey(tmpMemShouldPay, today()) 
+                push!(tmpMemShouldPay[today()], billname => payTotal)
+            else
+                push!(tmpMemShouldPay, today() => Dict(billname => payTotal))
+            end
 
             if haskey(payGrp.bills, today())
                 push!(payGrp.bills[today()], billname => bill)
@@ -364,7 +392,7 @@ function add_bills!(payGrp::PayGroup)
         println("\e[36m", x, "\e[0m")
     end
     if ! isempty(payGrp.bills)
-        println("And you have added the following bills:")
+        println("And the following bills are added:")
         for (date, dateBills) in payGrp.bills
             println("< \e[93m", date, "\e[0m >")
             for billname in keys(dateBills)
@@ -414,7 +442,12 @@ function add_bills!(payGrp::PayGroup)
                 print("Please input a \e[32mnumber\e[0m or \e[32mmath-expression\e[0m:\n")
             end
         end
-        push!(payGrp.members[payMan].hasPaid, today() => Dict(billname => payTotal))
+        tmpMemHasPaid = payGrp.members[payMan].hasPaid
+        if haskey(tmpMemHasPaid, today())
+            push!(tmpMemHasPaid[today()], billname => payTotal)
+        else
+            push!(tmpMemHasPaid, today() => Dict(billname => payTotal))
+        end
         bill.total = payTotal
 
         # details
@@ -481,7 +514,12 @@ function add_bills!(payGrp::PayGroup)
             end
         end
         for (name, val) in bill.shouldPay
-            push!(payGrp.members[name].shouldPay, today() => Dict(billname => val))
+            tmpMemShouldPay = payGrp.members[name].shouldPay
+            if haskey(tmpMemShouldPay, today())
+                push!(tmpMemShouldPay[today()], billname => val)
+            else 
+                push!(tmpMemShouldPay, today() => Dict(billname => val))
+            end
         end
 
         if haskey(payGrp.bills, today())
