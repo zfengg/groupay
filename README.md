@@ -17,7 +17,7 @@ https://user-images.githubusercontent.com/42152221/127734458-e71469d5-460f-4622-
 
 ### Locally with [Julia](https://julialang.org/downloads/)
 
-Just need to clone this repo or download [groupay.jl](groupay.jl)
+Clone this repo or download [groupay.jl](groupay.jl)
 
 ```bash
 git clone https://github.com/zfengg/groupay.git
