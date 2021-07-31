@@ -542,6 +542,16 @@ println()
 payGrp = gen_paygrp()
 # input_bills
 payGrp = add_bills!(payGrp)
+# payment solution
+print_soln(payGrp)
+println()
+println("Show detailed information?(y/[n])")
+willContinue = readline()
+if willContinue != "y"
+    println()
+    println("Have a good day ~")
+    exit()
+end
 # print bills
 println()
 println("Show all the bills?([y]/n)")
@@ -557,10 +567,7 @@ if ynFlag == "n"
 else
     print_member(payGrp)
 end
-# payment solution
-print_soln(payGrp)
-# the end
-println()
+# continue
 println("Continue to check out info?(y/[n])")
 willContinue = readline()
 if willContinue != "y"
@@ -568,7 +575,6 @@ if willContinue != "y"
     println("Have a good day ~")
     exit()
 end
-# continue
 manual = [
     ("g", "the alias for your group")
     ("s()", "show payment solution")
