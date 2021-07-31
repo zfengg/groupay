@@ -8,12 +8,12 @@ It solves the frequent but annoying payment issues in our life, especially after
 
 [![asciicast](https://asciinema.org/a/427746.svg)](https://asciinema.org/a/427746?t=7)
 
+> Try it out @ [Repl.it](https://replit.com/@zfengg/groupay). It's fun!
+
 ## Usage
-### Online by [Repl.it](https://replit.com/@zfengg/groupay). [Click to run!](https://replit.com/@zfengg/groupay)
+### Online by [Repl.it](https://replit.com/@zfengg/groupay)
 
 https://user-images.githubusercontent.com/42152221/127734458-e71469d5-460f-4622-a779-f35235a76e64.mov
-
-> Try it out @ [Repl.it](https://replit.com/@zfengg/groupay). It's fun!
 
 ### Locally with [Julia](https://julialang.org/downloads/)
 
