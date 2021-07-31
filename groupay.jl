@@ -135,13 +135,14 @@ end
     Add more members to a `PayGroup` interactively.
 """
 function add_member!(payGrp::PayGroup)
-    println("Here are the members in \e[31m", payGrp.title, "\e[0m:")
+    println("Let's add more members!")
+    println("Current members in \e[31m", payGrp.title, "\e[0m:")
     for x in keys(payGrp.members)
         println("\e[36m", x, "\e[0m")
     end
 
+    println("\n(\e[31mWarning\e[0m: Repeated names may crash the whole process ^_^!)\n")
     println("Who else do you want to add?")
-    println("\e[31mWarning\e[0m: Repeated names may crash the whole process ^_^!")
     addMembers = String[]
     while true
         membersTmp = readline()
@@ -165,6 +166,11 @@ function add_member!(payGrp::PayGroup)
 
     for name in addMembers
         push!(payGrp.members, name => Member(name))
+    end
+
+    println("\nUpdated members in \e[31m", payGrp.title, "\e[0m:")
+    for x in keys(payGrp.members)
+        println("\e[36m", x, "\e[0m")
     end
 
     return payGrp
@@ -553,10 +559,41 @@ end
 # payment solution
 print_soln(payGrp)
 # the end
-println()
-println("Have a good day ~")
 
-bill = print_bill
-mem = print_member
-sol = print_soln
+println("Continue to check out info?(y/[n])")
+willContinue = readline()
+if willContinue != "y" 
+    println()
+    println("Have a good day ~")
+    exit()
+end
+
+manual = [ 
+    ("g", "the alias for your group")
+    ("s()", "show payment solution")
+    ("b()", "show all bills")
+    ("b(x)", "show bill with name \e[33mx\e[0m")
+    ("m()", "show bills of all members")
+    ("m(x)", "show bills of member \e[36mx\e[0m")
+    ("am()", "add members to your group")
+    ("ab()", "add bills to your group")
+]
+
+function print_manual(man)
+    println()
+    println("\e[31m Command manual\e[0m:")
+    for cmd in man
+        println("  \e[32m", cmd[1], "\e[0m : ", cmd[2])
+    end 
+    println("\n Note: You can stop at anytime by preshing the \e[36mStop\e[0m button.\n")
+end
+
+print_manual(manual)
 g = payGrp
+b() = print_bill(g)
+b(x::String) = print_bill(x, g)
+m() = print_member(g)
+m(x::String) = print_member(x, g)
+s() = print_soln(g)
+am() = add_member!(g)
+ab() = add_bills!(g)
