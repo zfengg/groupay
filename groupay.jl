@@ -603,13 +603,13 @@ am() = add_member!(g)
 ab() = add_bills!(g)
 
 function print_manual(man)
-    println("")
+    println("\nNote: You can stop at anytime by preshing the \e[36mStop\e[0m button.\n")
     println("\e[35mCommand manual\e[0m:")
     for cmd in man
         println("  \e[32m", cmd[1], "\e[0m : ", cmd[2])
     end
-    println("Get help by \e[33m?\e[0m e.g., \e[33m?s\e[0m")
-    println("\nNote: You can stop at anytime by preshing the \e[36mStop\e[0m button.\n")
+    println("Get help by \e[33m?\e[0m e.g., \e[33m?s\e[0m\n")
+    
 end
 
 print_manual(manual)
