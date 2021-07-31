@@ -559,41 +559,52 @@ end
 # payment solution
 print_soln(payGrp)
 # the end
-
+println()
 println("Continue to check out info?(y/[n])")
 willContinue = readline()
-if willContinue != "y" 
+if willContinue != "y"
     println()
     println("Have a good day ~")
     exit()
 end
-
-manual = [ 
+# continue
+manual = [
     ("g", "the alias for your group")
     ("s()", "show payment solution")
     ("b()", "show all bills")
-    ("b(x)", "show bill with name \e[33mx\e[0m")
+    ("b(\"x\")", "show bill with name \e[33mx\e[0m")
     ("m()", "show bills of all members")
-    ("m(x)", "show bills of member \e[36mx\e[0m")
+    ("m(\"x\")", "show bills of member \e[36mx\e[0m")
     ("am()", "add members to your group")
     ("ab()", "add bills to your group")
 ]
+## cmds
+"the alias for your group"
+g = payGrp
+"show payment solution"
+s() = print_soln(g)
+"show all bills"
+b() = print_bill(g)
+"show bill with name `x`"
+b(x::String) = print_bill(x, g)
+"show bills of all members"
+m() = print_member(g)
+"show bills of member \e[36mx\e[0m"
+m(x::String) = print_member(x, g)
+"add members to your group"
+am() = add_member!(g)
+"add bills to your group"
+ab() = add_bills!(g)
 
 function print_manual(man)
-    println()
-    println("\e[31m Command manual\e[0m:")
+    println("")
+    println("\e[35mCommand manual\e[0m:")
     for cmd in man
         println("  \e[32m", cmd[1], "\e[0m : ", cmd[2])
-    end 
-    println("\n Note: You can stop at anytime by preshing the \e[36mStop\e[0m button.\n")
+    end
+    println("Get help by \e[33m?\e[0m e.g., \e[33m?s\e[0m")
+    println("\nNote: You can stop at anytime by preshing the \e[36mStop\e[0m button.\n")
 end
 
 print_manual(manual)
-g = payGrp
-b() = print_bill(g)
-b(x::String) = print_bill(x, g)
-m() = print_member(g)
-m(x::String) = print_member(x, g)
-s() = print_soln(g)
-am() = add_member!(g)
-ab() = add_bills!(g)
+
