@@ -1,11 +1,11 @@
 # ---------------------------------------------------------------------------- #
-#       ______                                  
+#       ______
 #      / ____/________  __  ______  ____ ___  __
 #     / / __/ ___/ __ \/ / / / __ \/ __ `/ / / /
-#    / /_/ / /  / /_/ / /_/ / /_/ / /_/ / /_/ / 
-#    \____/_/   \____/\__,_/ .___/\__,_/\__, /  
-#                         /_/          /____/   
-#              
+#    / /_/ / /  / /_/ / /_/ / /_/ / /_/ / /_/ /
+#    \____/_/   \____/\__,_/ .___/\__,_/\__, /
+#                         /_/          /____/
+#
 #   A simple interactive group payment solution.
 #
 # Copyright: Zhou Feng @ https://github.com/zfengg/groupay
@@ -598,21 +598,21 @@ g = payGrp
 
 """
     s()
-    
+
 show payment solution
 """
 s() = print_soln(g)
 
 """
     b()
-    
+
 show all bills
 """
 b() = print_bill(g)
 
 """
-    b(x::String) 
-    
+    b(x::String)
+
 show bill with name \e[33mx\e[0m
 """
 b(x::String) = print_bill(x, g)
@@ -625,15 +625,15 @@ show bills of all members
 m() = print_member(g)
 
 """
-    m(x::String)    
-    
+    m(x::String)
+
 show bills of member \e[36mx\e[0m
 """
 m(x::String) = print_member(x, g)
 
 """
     am()
-    
+
 add members to your group
 """
 am() = add_member!(g)
@@ -652,7 +652,7 @@ function print_manual(man)
         println("  \e[32m", cmd[1], "\e[0m : ", cmd[2])
     end
     println("Get help by \e[33m?\e[0m e.g., \e[33m?s\e[0m\n")
-    
+
 end
 
 print_manual(manual)
