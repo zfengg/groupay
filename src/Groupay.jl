@@ -130,11 +130,11 @@ end
 """
 function gen_paygrp()
     if isfile("groupay.jld2")
-        println("A saved \e[32mPayGroup\e[0m has been detected!")    
+        println("A saved \e[32mPayGroup\e[0m has been detected!")
         println("Do you want to load it?([y]/n)")
         shouldLoad = readline()
-        if shouldLoad == "n" 
-            println("Then let's start a new group.") 
+        if shouldLoad == "n"
+            println("Then let's start a new group.")
         else
             payGrp = load_paygrp("groupay.jld2")
             println("The saved group has been loaded! ^_^")
@@ -194,7 +194,7 @@ end
 """
 function add_member!(payGrp::PayGroup)
     println("Current members in \e[31m", payGrp.title, "\e[0m:")
-    for x in keys(payGrp.members) # TODO: keys()
+    for x in keys(payGrp.members)
         println("\e[36m", x, "\e[0m")
     end
     println("\nDo you want to add more members?([y]/n)")
@@ -262,7 +262,6 @@ get_total(g::PayGroup, d::Date) = haskey(g.bills, d) ? sum(b.total for b in valu
 
 function print_metainfo(g::PayGroup)
     println("Group: \e[91m", g.title, "\e[0m")
-    # println("Date: \e[95m", g.date, "\e[0m")
     print("Members: \e[36m")
     for name in keys(g.members)
         print(name, " ")
@@ -358,7 +357,7 @@ function add_bills!(payGrp::PayGroup)
             bill.paidPy = payMan
             push!(bill.shouldPay, bill.paidPy => bill.total)
             tmpMemShouldPay = payGrp.members[payMan].shouldPay
-            if haskey(tmpMemShouldPay, today()) 
+            if haskey(tmpMemShouldPay, today())
                 push!(tmpMemShouldPay[today()], billname => payTotal)
             else
                 push!(tmpMemShouldPay, today() => Dict(billname => payTotal))
@@ -517,7 +516,7 @@ function add_bills!(payGrp::PayGroup)
             tmpMemShouldPay = payGrp.members[name].shouldPay
             if haskey(tmpMemShouldPay, today())
                 push!(tmpMemShouldPay[today()], billname => val)
-            else 
+            else
                 push!(tmpMemShouldPay, today() => Dict(billname => val))
             end
         end
