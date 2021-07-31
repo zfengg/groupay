@@ -1,12 +1,12 @@
 #!/usr/bin/env julia
 # ---------------------------------------------------------------------------- #
-#       ______                                  
+#       ______
 #      / ____/________  __  ______  ____ ___  __
 #     / / __/ ___/ __ \/ / / / __ \/ __ `/ / / /
-#    / /_/ / /  / /_/ / /_/ / /_/ / /_/ / /_/ / 
-#    \____/_/   \____/\__,_/ .___/\__,_/\__, /  
-#                         /_/          /____/   
-#              
+#    / /_/ / /  / /_/ / /_/ / /_/ / /_/ / /_/ /
+#    \____/_/   \____/\__,_/ .___/\__,_/\__, /
+#                         /_/          /____/
+#
 #   A simple interactive group payment solution.
 #
 # Copyright: Zhou Feng @ https://github.com/zfengg/groupay
@@ -100,7 +100,7 @@ function print_member(member::Member, d::Date)
 end
 print_member(g::PayGroup, m::String, d::Date) = print_member(g.members[m], d)
 function print_member(member::Member)
-    println("[\e[36m", member.name, "\e[0m]") 
+    println("[\e[36m", member.name, "\e[0m]")
     dates = union([x[1] for x in member.hasPaid], [y[1] for y in member.shouldPay])
     for d in dates
         print_member(member, d)
@@ -251,7 +251,7 @@ function print_metainfo(g::PayGroup)
     end
     print("\e[0m\n")
     println("Total: \e[92m", sum(b.total for d in keys(g.bills) for b in values(g.bills[d])), "\e[0m")
-    println() 
+    println()
     return nothing
 end
 
@@ -270,7 +270,7 @@ function print_bill(g::PayGroup)
             print_bill(bill)
         end
         println()
-    end 
+    end
     println("======\n")
 end
 
@@ -305,7 +305,7 @@ function add_bills!(payGrp::PayGroup)
             println()
             println("What's your first bill to add?")
         end
-        
+
         while true
             # meta info
             billname = readline()
@@ -339,9 +339,9 @@ function add_bills!(payGrp::PayGroup)
             if haskey(payGrp.bills, today())
                 push!(payGrp.bills[today()], billname => bill)
             else
-                push!(payGrp.bills, today() => Dict(billname => bill))            
+                push!(payGrp.bills, today() => Dict(billname => bill))
             end
-    
+
             println()
             print_bill(bill)
 
@@ -483,11 +483,11 @@ function add_bills!(payGrp::PayGroup)
         for (name, val) in bill.shouldPay
             push!(payGrp.members[name].shouldPay, today() => Dict(billname => val))
         end
-        
+
         if haskey(payGrp.bills, today())
             push!(payGrp.bills[today()], billname => bill)
         else
-            push!(payGrp.bills, today() => Dict(billname => bill))            
+            push!(payGrp.bills, today() => Dict(billname => bill))
         end
 
         println()
