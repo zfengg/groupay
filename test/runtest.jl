@@ -1,5 +1,5 @@
 #!/usr/bin/env julia
 
-include("Groupay.jl")
+include("../src/Groupay.jl")
 using .Groupay
 payGrp = main_groupay()

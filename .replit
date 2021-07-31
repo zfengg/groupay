@@ -1,2 +1,0 @@
-language = "julia"
-run = "julia -iq groupay.jl"
