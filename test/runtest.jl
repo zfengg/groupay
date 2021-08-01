@@ -45,18 +45,7 @@ if willContinue != "y"
     println("Have a good day ~")
     exit()
 end
-manual = [
-    ("g", "the alias for your group")
-    ("s()", "show payment solution")
-    ("b()", "show all bills")
-    ("b(\"x\")", "show bill with name \e[33mx\e[0m")
-    ("m()", "show bills of all members")
-    ("m(\"x\")", "show bills of member \e[36mx\e[0m")
-    ("am()", "add members to your group")
-    ("ab()", "add bills to your group")
-    ("sg()", "save your group")
-    ("lg()", "load your group")
-]
+
 ## cmds
 """
     g::PayGroup
@@ -80,11 +69,11 @@ show all bills
 b() = print_bill(g)
 
 """
-    b(x::String)
+    b(s::String)
 
-show bill with name \e[33mx\e[0m
+show bill with name \e[33ms\e[0m
 """
-b(x::String) = print_bill(g, x, today())
+b(s::String) = print_bill(g, s)
 
 """
     m()
@@ -94,11 +83,11 @@ show bills of all members
 m() = print_member(g)
 
 """
-    m(x::String)
+    m(s::String)
 
 show bills of member \e[36mx\e[0m
 """
-m(x::String) = print_member(g, x)
+m(s::String) = print_member(g, s)
 
 """
     am()
@@ -128,13 +117,3 @@ load your group
 """
 lg() = load_paygrp("groupay.jld2")
 
-function print_manual(man)
-    println("")
-    println("\e[35mCommand manual\e[0m:")
-    for cmd in man
-        println("  \e[32m", cmd[1], "\e[0m : ", cmd[2])
-    end
-    println("Get help by \e[33m?\e[0m e.g., \e[33m?s\e[0m\n")
-end
-
-print_manual(manual)

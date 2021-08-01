@@ -56,6 +56,7 @@ mutable struct PayGroup
     PayGroup(title::String) = new(title, Dict(), Dict())
 end
 
+# get
 get_haspaid(m::Member, d::Date) = haskey(m.hasPaid, d) ? sum(values(m.hasPaid[d])) : 0.
 get_haspaid(g::PayGroup, m::String, d::Date) = get_haspaid(g.members[m], d)
 get_haspaid(m::Member) = isempty(m.hasPaid) ? 0. : sum(v for d in keys(m.hasPaid) for v in values(m.hasPaid[d]))
@@ -68,19 +69,26 @@ get_topay(m::Member, d::Date) = get_shouldpay(m, d) - get_haspaid(m, d)
 get_topay(g::PayGroup, m::String, d::Date) = get_shouldpay(g, m, d) -get_haspaid(g, m, d)
 get_topay(m::Member) = get_shouldpay(m) - get_haspaid(m)
 
+get_total(g::PayGroup, d::Date) = haskey(g.bills, d) ? sum(b.total for b in values(g.bills[d])) : 0.
+
 # print
 """
-    print_member(m::Member)
+    print_member(m::Member, d::Date)
 
-    Print payment information of `m`.
+    Print payment information of `m` on `d`.
 """
-function print_member(member::Member, d::Date)
+function print_member(member::Member, d::Date, showName::Bool=true)
+    if showName
+        println("[\e[36m", m.name, "\e[0m]")
+    end
     flagHasPaid = haskey(member.hasPaid, d)
     flagShouldPay = haskey(member.hasPaid, d)
-    println("< \e[93m", d, "\e[0m >")
+    
     if !flagHasPaid && !flagShouldPay
         return nothing
     end
+    println("< \e[93m", d, "\e[0m >")``
+
     if flagHasPaid
         println("-- has paid")
         for (k, v) in member.hasPaid[d]
@@ -98,31 +106,81 @@ function print_member(member::Member, d::Date)
     println("-- remains to pay: \e[35m", get_topay(member, d), "\e[0m\n")
     return nothing
 end
-print_member(g::PayGroup, m::String, d::Date) = print_member(g.members[m], d)
-function print_member(member::Member)
-    println("[\e[36m", member.name, "\e[0m]")
-    dates = union([x[1] for x in member.hasPaid], [y[1] for y in member.shouldPay])
+function print_member(m::Member)
+    println("[\e[36m", m.name, "\e[0m]")
+    dates = union([x[1] for x in m.hasPaid], [y[1] for y in m.shouldPay])
     for d in dates
-        print_member(member, d)
+        print_member(m, d, false)
     end
 end
-print_member(g::PayGroup, m::String) = print_member(g.members[m])
-
-
 """
-    print_member(x::PayGroup)
+    print_member(g::PayGroup)
 
-    Print payment information for all the members in `x::PayGroup`.
+    Print payment information for all the members in `g`.
 """
 function print_member(g::PayGroup)
     println("\n======\n")
-    for member in values(g.members)
-        print_member(member)
+    for m in values(g.members)
+        print_member(m)
         println()
     end
     println("======\n")
 end
+print_not_in_group(s::String) = println("Sorry, \e[36m", s, "\e[0m is in your group!")
+print_member(g::PayGroup, s::String, d::Date) = haskey(g.members, s) ? print_member(g.members[s], d) : print_not_in_group(s)
+print_member(g::PayGroup, s::String) = haskey(g.members, s) ? print_member(g.members[s]) : print_not_in_group(s)
+# print_member_today(m::Member) = print_member(m, today())
+# print_member_today(g::PayGroup, s::String) = haskey(g.members, s) ? print_member_today(g.members[s]) : print_not_in_group(s)
 
+"""
+    print_bill(bill::Bill)
+
+    Print the information of bills.
+"""
+function print_bill(b::Bill)
+    println("[\e[33m", b.billname, "\e[0m]")
+    println("total = \e[31m", b.total, "\e[0m paid by \e[36m", b.paidPy, "\e[0m;")
+    if b.isAA
+        println("-- \e[34mAA\e[0m --")
+    else
+        println("-- \e[34mnot AA\e[0m --")
+    end
+    for (k, v) in b.shouldPay
+        println("\e[36m", k, "\e[0m => ", v)
+    end
+    println()
+end
+function print_bill(g::PayGroup, d::Date)
+    if ! haskey(g.bills, d)
+        println("< \e[93m", d, "\e[0m > == \e[32mno bills\e[0m")
+        return nothing
+    end
+    println("< \e[93m", d, "\e[0m > == \e[32m", get_total(g, d), "\e[0m")
+    for b in values(g.bills[d])
+        print_bill(b)
+    end
+end
+"""
+    print_bill(x::PayGroup)
+
+    Print the information of all the bills in `x::PayGroup`.
+
+"""
+function print_bill(g::PayGroup)
+    println("\n======\n")
+    print_metainfo(g)
+    for d in keys(g.bills)
+        print_bill(g, d)
+        println()
+    end
+    println("======\n")
+end
+print_bill(g::PayGroup, s::String, d::Date) = print_bill(g.bills[d][s])
+print_bill(g::PayGroup, s::String) = print_bill(g, s, today())
+print_bill_today(g::PayGroup) = print_bill(g, today())
+
+
+# gen
 """
     gen_paygrp() -> payGrp::PayGroup
 
@@ -187,6 +245,7 @@ function gen_paygrp()
     return payGrp
 end
 
+# add
 """
     add_member!(x::PayGroup) -> x::PayGroup
 
@@ -238,27 +297,8 @@ function add_member!(payGrp::PayGroup)
     return payGrp
 end
 
-"""
-    print_bill(billname::String, x::PayGroup)
 
-    Print the information of bills.
-"""
-function print_bill(bill::Bill)
-    println("[\e[33m", bill.billname, "\e[0m]")
-    println("total = \e[31m", bill.total, "\e[0m paid by \e[36m", bill.paidPy, "\e[0m;")
-    if bill.isAA
-        println("-- \e[34mAA\e[0m --")
-    else
-        println("-- \e[34mnot AA\e[0m --")
-    end
-    for (k, v) in bill.shouldPay
-        println("\e[36m", k, "\e[0m => ", v)
-    end
-    println()
-end
-print_bill(g::PayGroup, billname::String, d::Date) = print_bill(g.bills[d][billname])
 
-get_total(g::PayGroup, d::Date) = haskey(g.bills, d) ? sum(b.total for b in values(g.bills[d])) : 0.
 
 function print_metainfo(g::PayGroup)
     println("Group: \e[91m", g.title, "\e[0m")
@@ -272,24 +312,6 @@ function print_metainfo(g::PayGroup)
     return nothing
 end
 
-"""
-    print_bill(x::PayGroup)
-
-    Print the information of all the bills in `x::PayGroup`.
-
-"""
-function print_bill(g::PayGroup)
-    println("\n======\n")
-    print_metainfo(g)
-    for (date, dateBills) in g.bills
-        println("< \e[93m", date, "\e[0m > == \e[32m", get_total(g, date), "\e[0m")
-        for bill in values(dateBills)
-            print_bill(bill)
-        end
-        println()
-    end
-    println("======\n")
-end
 
 """
     add_bills!(payGrp::PayGroup) -> payGrp::PayGroup
@@ -618,5 +640,31 @@ save_paygrp(g::PayGroup) = save_paygrp("groupay.jld2", g)
 load_paygrp(f::String) = load_object(f)
 load_paygrp() = load_paygrp("groupay.jld2")
 export save_paygrp, load_paygrp
+
+
+# aliases for interactive usage
+manual = [
+    ("g", "the alias for your group")
+    ("s()", "show payment solution")
+    ("b()", "show all bills")
+    ("b(\"x\")", "show bill with name \e[33mx\e[0m")
+    ("m()", "show bills of all members")
+    ("m(\"x\")", "show bills of member \e[36mx\e[0m")
+    ("am()", "add members to your group")
+    ("ab()", "add bills to your group")
+    ("sg()", "save your group")
+    ("lg()", "load your group")
+]
+function print_manual(man)
+    println("")
+    println("\e[35mCommand manual\e[0m:")
+    for cmd in man
+        println("  \e[32m", cmd[1], "\e[0m : ", cmd[2])
+    end
+    println("Get help by \e[33m?\e[0m e.g., \e[33m?s\e[0m\n")
+end
+print_manual() = print_manual(manual)
+
+
 
 end # module
