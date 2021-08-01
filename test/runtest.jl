@@ -17,6 +17,7 @@ function startup()
         shouldLoad = readline()
         if shouldLoad == "n"
             println("Then let's start a new group.")
+            payGrp = gen_paygrp()
         else
             payGrp = load_paygrp("groupay.jld2")
             println()
