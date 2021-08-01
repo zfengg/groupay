@@ -343,6 +343,7 @@ end
     Add bills on `insertDate` to `payGrp`.
 """
 function add_bills!(payGrp::PayGroup, insertDate::Date)
+    isToday = isequal(insertDate, today())
     println()
 
     if length(payGrp.members) == 1
@@ -362,11 +363,11 @@ function add_bills!(payGrp::PayGroup, insertDate::Date)
                 end
             end
             println()
-            println("What's your next bill to add for < \e[93m", insertDate, "\e[0m >?")
+            println("What's your next bill to add for < \e[93m", isToday ? "today" : insertDate, "\e[0m >?")
         else
             println("Then let's review your bills together.")
             println()
-            println("What's your first bill to add for < \e[93m", insertDate, "\e[0m >?")
+            println("What's your first bill to add for < \e[93m", isToday ? "today" : insertDate, "\e[0m >?")
         end
 
         while true
@@ -461,11 +462,11 @@ function add_bills!(payGrp::PayGroup, insertDate::Date)
             end
         end
         println()
-        println("What's your next bill to add for < \e[93m", insertDate, "\e[0m >?")
+        println("What's your next bill to add for < \e[93m", isToday ? "today" : insertDate, "\e[0m >?")
     else
         println("Then let's review your bills together.")
         println()
-        println("What's your first bill to add for < \e[93m", insertDate, "\e[0m >?")
+        println("What's your first bill to add for < \e[93m", isToday ? "today" : insertDate, "\e[0m >?")
     end
 
     while true

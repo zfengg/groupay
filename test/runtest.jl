@@ -36,14 +36,6 @@ function startup()
                     println("\e[33m", billname, "\e[0m")
                 end
             end
-            # println()
-            # println("Do you want to add more bills?([y]/n)")
-            # shouldAddBill = readline()
-            # if shouldAddBill == "n"
-            #     return payGrp
-            # end
-            # payGrp = add_bills!(payGrp)
-            # return payGrp
         end
     else
         payGrp = gen_paygrp()
