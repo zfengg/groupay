@@ -88,8 +88,8 @@ function print_member(m::Member, d::Date, showName::Bool=true)
         println("[\e[36m", m.name, "\e[0m]")
     end
     flagHasPaid = haskey(m.hasPaid, d)
-    flagShouldPay = haskey(m.hasPaid, d)
-    
+    flagShouldPay = haskey(m.shouldPay, d)
+
     if (!flagHasPaid) && (!flagShouldPay)
         return nothing
     end
@@ -139,6 +139,11 @@ print_member(g::PayGroup, s::String, d) = print_member(g::PayGroup, s, Date(d))
 print_member(g::PayGroup, s::String) = haskey(g.members, s) ? print_member(g.members[s]) : print_not_in_group(s)
 print_member_today(m::Member) = print_member(m, today())
 print_member_today(g::PayGroup, s::String) = haskey(g.members, s) ? print_member_today(g.members[s]) : print_not_in_group(s)
+function print_member_today(g::PayGroup)
+    for m in values(g.members)
+        print_member_today(m)
+    end
+end 
 
 """
     print_metainfo(g::PayGroup)
@@ -152,7 +157,9 @@ function print_metainfo(g::PayGroup)
         print(name, " ")
     end
     print("\e[0m\n")
-    println("Total: \e[92m", sum(b.total for d in keys(g.bills) for b in values(g.bills[d])), "\e[0m")
+    if ! isempty(g.bills)
+        println("Total: \e[92m", sum(b.total for d in keys(g.bills) for b in values(g.bills[d])), "\e[0m")
+    end
     println()
 end
 
@@ -201,7 +208,7 @@ function print_bill(g::PayGroup)
 end
 function print_bill(g::PayGroup, s::String, d::Date)
     if ! haskey(g.bills, d)
-        println("< \e[93m", d, "\e[0m > has no bills!") 
+        println("< \e[93m", d, "\e[0m > has no bills!")
         return nothing
     end
     if ! haskey(g.bills[d], s)
@@ -347,7 +354,7 @@ function add_bills!(payGrp::PayGroup, insertDate::Date)
         end
 
         if ! isempty(payGrp.bills)
-            println("Current bills:")
+            println("And you have added the following bills:")
             for (date, dateBills) in payGrp.bills
                 println("< \e[93m", date, "\e[0m >")
                 for billname in keys(dateBills)
@@ -369,6 +376,22 @@ function add_bills!(payGrp::PayGroup, insertDate::Date)
                 println("It's better to give the bill a name, right? ^o^")
                 println("So please name your bill:")
                 billname = readline()
+            end
+            if haskey(payGrp.bills, insertDate) && haskey(payGrp.bills[insertDate], billname)
+                for m in values(payGrp.members)
+                    if haskey(m.hasPaid, insertDate) && haskey(m.hasPaid[insertDate], billname)
+                        pop!(m.hasPaid[insertDate], billname)
+                        if isempty(m.hasPaid[insertDate])
+                            pop!(m.hasPaid, insertDate)
+                        end
+                    end
+                    if haskey(m.shouldPay, insertDate) && haskey(m.shouldPay[insertDate], billname)
+                        pop!(m.shouldPay[insertDate], billname)
+                        if isempty(m.shouldPay[insertDate])
+                            pop!(m.shouldPay, insertDate)
+                        end
+                    end
+                end
             end
             bill = Bill(billname, insertDate)
 
@@ -430,7 +453,7 @@ function add_bills!(payGrp::PayGroup, insertDate::Date)
         println("\e[36m", x, "\e[0m")
     end
     if ! isempty(payGrp.bills)
-        println("Current bills:")
+        println("And you have added the following bills:")
         for (date, dateBills) in payGrp.bills
             println("< \e[93m", date, "\e[0m >")
             for billname in keys(dateBills)
@@ -452,6 +475,22 @@ function add_bills!(payGrp::PayGroup, insertDate::Date)
             println("It's better to give the bill a name, right? ^o^")
             println("So please name your bill:")
             billname = readline()
+        end
+        if haskey(payGrp.bills, insertDate) && haskey(payGrp.bills[insertDate], billname)
+            for m in values(payGrp.members)
+                if haskey(m.hasPaid, insertDate) && haskey(m.hasPaid[insertDate], billname)
+                    pop!(m.hasPaid[insertDate], billname)
+                    if isempty(m.hasPaid[insertDate])
+                        pop!(m.hasPaid, insertDate)
+                    end
+                end
+                if haskey(m.shouldPay, insertDate) && haskey(m.shouldPay[insertDate], billname)
+                    pop!(m.shouldPay[insertDate], billname)
+                if isempty(m.shouldPay[insertDate])
+                        pop!(m.shouldPay, insertDate)
+                    end
+                end
+            end
         end
         bill = Bill(billname, insertDate)
 
@@ -545,10 +584,11 @@ function add_bills!(payGrp::PayGroup, insertDate::Date)
                 AAlist = keys(payGrp.members)
             end
             avgPay = bill.total / length(AAlist)
-            if name in AAlist
+            for name in AAlist
                 push!(bill.shouldPay, name => avgPay)
             end
         end
+
         for (name, val) in bill.shouldPay
             tmpMemShouldPay = payGrp.members[name].shouldPay
             if haskey(tmpMemShouldPay, insertDate)

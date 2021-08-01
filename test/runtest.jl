@@ -2,6 +2,7 @@
 
 include("../src/Groupay.jl")
 using .Groupay
+using Revise
 
 # ----------------------------------- main ----------------------------------- #
 run(`clear`)
@@ -28,25 +29,48 @@ function startup()
                 payGrp = add_member!(payGrp)
             end
             println()
-            println("Current bills:")
+            println("And you have added the following bills:")
             for (d, dateBills) in payGrp.bills
                 println("< \e[93m", d, "\e[0m >")
                 for billname in keys(dateBills)
                     println("\e[33m", billname, "\e[0m")
                 end
             end
-            println()
-            println("Do you want to add more bills?([y]/n)")
-            shouldAddBill = readline()
-            if shouldAddBill == "n"
-                return payGrp
-            end
-            payGrp = add_bills!(payGrp)
-            return payGrp
+            # println()
+            # println("Do you want to add more bills?([y]/n)")
+            # shouldAddBill = readline()
+            # if shouldAddBill == "n"
+            #     return payGrp
+            # end
+            # payGrp = add_bills!(payGrp)
+            # return payGrp
         end
+    else
+        payGrp = gen_paygrp()
     end
-    payGrp = gen_paygrp()
-    payGrp = add_bills!(payGrp)
+    
+    println()
+    println("Do you want to add some bills?([y]/n)")
+    shouldAddBill = readline()
+    if shouldAddBill == "n"
+        return payGrp
+    end
+    println("And on today?([y]/n)")
+    onToday = readline()
+    if onToday == "n"
+        while true
+            println("So on which date? e.g., 2021-8-12")
+            insertDate = readline()
+            try
+                add_bills!(payGrp, insertDate)
+                break
+            catch
+                println("Wrong date format!")
+            end
+        end
+    else
+        payGrp = add_bills!(payGrp)
+    end
     return payGrp
 end
 
@@ -54,6 +78,16 @@ payGrp = startup()
 
 # payment solution
 print_soln(payGrp)
+# save 
+println()
+println("Do you want to save your group?([y]/n)")
+ynFlag = readline()
+if ynFlag == "n"
+else
+    save_paygrp(payGrp)
+    println("Your group has been saved as \e[32mgroupay.jld2\e[0m ^_^")
+end
+# show info
 println()
 println("Show detailed information?(y/[n])")
 willContinue = readline()
@@ -77,7 +111,9 @@ if ynFlag == "n"
 else
     print_member(payGrp)
 end
+
 # continue
+println()
 println("Continue to check out info?(y/[n])")
 willContinue = readline()
 if willContinue != "y"
@@ -98,6 +134,7 @@ manual = [
     ("sg()", "save your group")
     ("lg()", "load your group")
 ]
+
 function print_manual(man)
     println("")
     println("\e[35mCommand manual\e[0m:")
@@ -106,7 +143,9 @@ function print_manual(man)
     end
     println("Get help by \e[33m?\e[0m e.g., \e[33m?s\e[0m\n")
 end
-print_manual(manual)
+man() = print_manual(manual)
+man()
+
 # ----------------------------------- alias ---------------------------------- #
 g = payGrp
 """
@@ -185,4 +224,4 @@ sg() = save_paygrp(g)
 load your group
 """
 lg() = load_paygrp("groupay.jld2")
-
+dg() = rm("groupay.jld2")
