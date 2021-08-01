@@ -688,77 +688,83 @@ load_paygrp() = load_paygrp("groupay.jld2")
 export save_paygrp, load_paygrp
 
 # ----------------------------- interactive usage ---------------------------- #
-function startup()
-    println()
-    if isfile("groupay.jld2")
-        println("A saved \e[32mPayGroup\e[0m has been detected!")
-        println("Do you want to load it?([y]/n)")
-        shouldLoad = readline()
-        if shouldLoad == "n"
-            println("Then let's start a new group.")
-            payGrp = gen_paygrp()
-        else
-            payGrp = load_paygrp("groupay.jld2")
-            println()
-            println("The saved group has been loaded! ^_^")
-            print_metainfo(payGrp)
+# function startup()
+#     println()
+#     if isfile("groupay.jld2")
+#         println("A saved \e[32mPayGroup\e[0m has been detected!")
+#         println("Do you want to load it?([y]/n)")
+#         shouldLoad = readline()
+#         if shouldLoad == "n"
+#             println("Then let's start a new group.")
+#             payGrp = gen_paygrp()
+#         else
+#             payGrp = load_paygrp("groupay.jld2")
+#             println()
+#             println("The saved group has been loaded! ^_^")
+#             print_metainfo(payGrp)
 
-            println("Do you want to add more members?(y/[n])")
-            shouldAddMem = readline()
-            if shouldAddMem == "y"
-                payGrp = add_member!(payGrp)
-            end
-            println()
-            println("And you have added the following bills:")
-            for (d, dateBills) in payGrp.bills
-                println("< \e[93m", d, "\e[0m >")
-                for billname in keys(dateBills)
-                    println("\e[33m", billname, "\e[0m")
-                end
-            end
-        end
-    else
-        payGrp = gen_paygrp()
-    end
+#             println("Do you want to add more members?(y/[n])")
+#             shouldAddMem = readline()
+#             if shouldAddMem == "y"
+#                 payGrp = add_member!(payGrp)
+#             end
+#             println()
+#             println("And you have added the following bills:")
+#             for (d, dateBills) in payGrp.bills
+#                 println("< \e[93m", d, "\e[0m >")
+#                 for billname in keys(dateBills)
+#                     println("\e[33m", billname, "\e[0m")
+#                 end
+#             end
+#         end
+#     else
+#         payGrp = gen_paygrp()
+#     end
 
-    println()
-    println("Do you want to add some bills?([y]/n)")
-    shouldAddBill = readline()
-    if shouldAddBill == "n"
-        return payGrp
-    end
-    println("And on today?([y]/n)")
-    onToday = readline()
-    if onToday == "n"
-        while true
-            println("So on which date? e.g., 2021-8-12")
-            insertDate = readline()
-            try
-                add_bills!(payGrp, insertDate)
-                break
-            catch
-                println("Wrong date format!")
-            end
-        end
-    else
-        payGrp = add_bills!(payGrp)
-    end
-    return payGrp
-end
+#     println()
+#     println("Do you want to add some bills?([y]/n)")
+#     shouldAddBill = readline()
+#     if shouldAddBill == "n"
+#         return payGrp
+#     end
+#     println("And on today?([y]/n)")
+#     onToday = readline()
+#     if onToday == "n"
+#         while true
+#             println("So on which date? e.g., 2021-8-12")
+#             insertDate = readline()
+#             try
+#                 add_bills!(payGrp, insertDate)
+#                 break
+#             catch
+#                 println("Wrong date format!")
+#             end
+#         end
+#     else
+#         payGrp = add_bills!(payGrp)
+#     end
+#     return payGrp
+# end
 
 # ---------------------------------- manual ---------------------------------- #
 manual = [
-    ("g", "the alias for your group")
-    ("s()", "show payment solution")
-    ("b()", "show all bills")
-    ("b(\"x\")", "show bill with name \e[33mx\e[0m")
-    ("m()", "show bills of all members")
-    ("m(\"x\")", "show bills of member \e[36mx\e[0m")
-    ("am()", "add members to your group")
-    ("ab()", "add bills to your group")
-    ("sg()", "save your group")
-    ("lg()", "load your group")
-    ("dg()", "delete your group")
+    ("g", "show meta-info of your group"),
+    ("s", "show payment solution"),
+    ("b", "show all bills"),
+    ("b foo", "show bill named by \e[33mfoo\e[0m"),
+    ("bt", "show only \e[93mtoday\e[0m's bills"),
+    ("bt foo", "show \e[93mtoday\e[0m's bill named by \e[33mfoo\e[0m"),
+    ("m", "show bills of all members"),
+    ("m bar", "show all the bills of \e[36mbar\e[0m"),
+    ("m bar 2021-8-1", "show bills of \e[36mbar\e[0m on \e[93m2021-8-1\e[0m"),
+    ("mt", "show \e[93mtoday\e[0m's bills for each member"),
+    ("mt bar", "show only \e[93mtoday\e[0m's bills of \e[36mbar\e[0m "),
+    ("am", "add members"),
+    ("ab", "add bills \e[93mtoday\e[0m"),
+    ("ab 2008-8-8", "add bills on \e[93m2008-8-8\e[0m"),
+    ("sg", "save your group"),
+    ("lg", "load your group"),
+    ("dg", "delete your group")
 ]
 
 function print_manual(man)
@@ -767,33 +773,28 @@ function print_manual(man)
     for cmd in man
         println("  \e[32m", cmd[1], "\e[0m : ", cmd[2])
     end
-    println("Get help by \e[33m?\e[0m e.g., \e[33m?s\e[0m\n")
+    println("Get help by \e[36mh\e[0m; quit by \e[31mq\e[0m\n")
 end
 print_manual() = print_manual(manual)
 
 print_invalidcmd() = println("\e[31mInvalid\e[0m command! Please input again.")
 
 function exec_cmd(g::PayGroup, nextCmd)
-    # cmdDic = Dict(
-    #     ("s", 1) => :(print_soln($g, $(nextCmd)[1])),
-    #     ("m", 1) => :(print_member($g)),
-    #     ("m", 2) => :(print_member($g, $(nextCmd[2]))),
-    #     ("b", 1) => :(print_bill($g)),
-    #     ("q", 1) => :(return true),
-    #     ("h", 1) => :(print_manual())
-    # )
-
     nextCmd = split(nextCmd)
+    nextCmd = String.(nextCmd)
     if isempty(nextCmd)
         print_invalidcmd()
         return false
     end
+
     headCmd = nextCmd[1]
     lenCmd = length(nextCmd)
     if headCmd == "q"
         return true
     elseif headCmd == "h"
         print_manual()
+    elseif headCmd == "g"
+        print_metainfo(g)
     elseif headCmd == "s"
         print_soln(g)
     elseif headCmd == "b"
@@ -853,13 +854,13 @@ function exec_cmd(g::PayGroup, nextCmd)
 end
 
 """
-recursively execute commands
+execute commands recursively 
 """
 function cmd_flow(g::PayGroup)
     print_manual()
     shouldExit = false
     while ! shouldExit
-        println("What do you want to do next?")
+        println("What's next? (\e[32mh\e[0m to help; \e[31mq\e[0m to quit)")
         nextCmd = readline()
         shouldExit = exec_cmd(g, nextCmd)
         println()
@@ -871,8 +872,80 @@ function main_interactive()
     run(`clear`)
     println("Hi, there! Welcome to happy ~\e[32m group pay \e[0m~")
     println("We will provide you a payment solution for your group.")
-    # startup
-    payGrp = startup()
+
+    # check saved group
+    println()
+    if isfile("groupay.jld2")
+        println("A saved \e[32mPayGroup\e[0m has been detected!")
+        println("Do you want to load it?([y]/n)")
+        shouldLoad = readline()
+        if shouldLoad == "n"
+            println("Then let's start a new group.")
+            # generate group
+            println()
+            payGrp = gen_paygrp()
+        else
+            payGrp = load_paygrp("groupay.jld2")
+            println()
+            println("The saved group has been loaded! ^_^")
+            print_metainfo(payGrp)
+
+            # enter cmd flow
+            println()
+            println("Do you want to enter command mode directly?([y]/n)")
+            willContinue = readline()
+            if willContinue != "n"
+                cmd_flow(payGrp)
+                println()
+                println("Have a good day ~")
+                return payGrp
+            end
+
+            # interactive mode
+            println("Do you want to add more members?(y/[n])")
+            shouldAddMem = readline()
+            if shouldAddMem == "y"
+                payGrp = add_member!(payGrp)
+            end
+            println()
+            println("And you have added the following bills:")
+            for (d, dateBills) in payGrp.bills
+                println("< \e[93m", d, "\e[0m >")
+                for billname in keys(dateBills)
+                    println("\e[33m", billname, "\e[0m")
+                end
+            end
+        end
+    else
+        # generate group
+        println()
+        payGrp = gen_paygrp()
+    end
+
+
+    println()
+    println("Do you want to add some bills?([y]/n)")
+    shouldAddBill = readline()
+    if shouldAddBill == "n"
+        return payGrp
+    end
+    println("And on today?([y]/n)")
+    onToday = readline()
+    if onToday == "n"
+        while true
+            println("So on which date? e.g., 2021-8-12")
+            insertDate = readline()
+            try
+                add_bills!(payGrp, insertDate)
+                break
+            catch
+                println("Wrong date format!")
+            end
+        end
+    else
+        payGrp = add_bills!(payGrp)
+    end
+
     # payment solution
     print_soln(payGrp)
     # save
@@ -910,7 +983,7 @@ function main_interactive()
     end
     # continue
     println()
-    println("Continue to check out info?(y/[n])")
+    println("Do you want to enter command mode?(y/[n])")
     willContinue = readline()
     if willContinue != "y"
         println()
@@ -920,7 +993,6 @@ function main_interactive()
 
     # enter cmd flow
     cmd_flow(payGrp)
-
     println()
     println("Have a good day ~")
     return payGrp
