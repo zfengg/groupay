@@ -824,7 +824,7 @@ function main_groupay()
     # check saved group
     println()
     if isfile("groupay.jld2")
-        println("A saved \e[32mPayGroup\e[0m has been detected!")
+        println("A saved group at \e[32mgroupay.jld2\e[0m has been detected!")
         println("Do you want to load it?([y]/n)")
         shouldLoad = readline()
         if shouldLoad == "n"
