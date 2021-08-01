@@ -7,11 +7,51 @@ using .Groupay
 run(`clear`)
 println("Hi, there! Welcome to happy ~\e[32m group pay \e[0m~")
 println("We will provide you a payment solution for your group.")
-println()
-# input_members
-payGrp = gen_paygrp()
-# input_bills
-payGrp = add_bills!(payGrp)
+
+function startup()
+    println()
+    if isfile("groupay.jld2")
+        println("A saved \e[32mPayGroup\e[0m has been detected!")
+        println("Do you want to load it?([y]/n)")
+        shouldLoad = readline()
+        if shouldLoad == "n"
+            println("Then let's start a new group.")
+        else
+            payGrp = load_paygrp("groupay.jld2")
+            println()
+            println("The saved group has been loaded! ^_^")
+            print_metainfo(payGrp)
+
+            println("Do you want to add more members?(y/[n])")
+            shouldAddMem = readline()
+            if shouldAddMem == "y"
+                payGrp = add_member!(payGrp)
+            end
+            println()
+            println("Current bills:")
+            for (d, dateBills) in payGrp.bills
+                println("< \e[93m", d, "\e[0m >")
+                for billname in keys(dateBills)
+                    println("\e[33m", billname, "\e[0m")
+                end
+            end
+            println()
+            println("Do you want to add more bills?([y]/n)")
+            shouldAddBill = readline()
+            if shouldAddBill == "n"
+                return payGrp
+            end
+            payGrp = add_bills!(payGrp)
+            return payGrp
+        end
+    end
+    payGrp = gen_paygrp()
+    payGrp = add_bills!(payGrp)
+    return payGrp
+end
+
+payGrp = startup()
+
 # payment solution
 print_soln(payGrp)
 println()
@@ -87,13 +127,15 @@ s() = print_soln(g)
 show all bills
 """
 b() = print_bill(g)
-
 """
     b(s::String)
 
 show bill with name \e[33ms\e[0m
 """
 b(s::String) = print_bill(g, s)
+b(s::String, d) = print_bill(g, s, d)
+
+bt() = print_bill_today(g)
 
 """
     m()
@@ -101,13 +143,19 @@ b(s::String) = print_bill(g, s)
 show bills of all members
 """
 m() = print_member(g)
-
 """
     m(s::String)
 
 show bills of member \e[36mx\e[0m
 """
 m(s::String) = print_member(g, s)
+m(s::String, d) = print_member(g, s, d)
+
+"""
+print today's info of a member
+"""
+mt() = print_member_today(g)
+mt(s::String) = print_member_today(g, s)
 
 """
     am()
@@ -122,6 +170,7 @@ am() = add_member!(g)
 add bills to your group
 """
 ab() = add_bills!(g)
+ab(d) = add_bills!(g, d)
 
 """
     sg()

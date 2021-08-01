@@ -90,10 +90,10 @@ function print_member(m::Member, d::Date, showName::Bool=true)
     flagHasPaid = haskey(m.hasPaid, d)
     flagShouldPay = haskey(m.hasPaid, d)
     
-    if !flagHasPaid && !flagShouldPay
+    if (!flagHasPaid) && (!flagShouldPay)
         return nothing
     end
-    println("< \e[93m", d, "\e[0m >")``
+    println("< \e[93m", d, "\e[0m >")
 
     if flagHasPaid
         println("-- has paid")
@@ -199,7 +199,17 @@ function print_bill(g::PayGroup)
     end
     println("======\n")
 end
-print_bill(g::PayGroup, s::String, d::Date) = print_bill(g.bills[d][s])
+function print_bill(g::PayGroup, s::String, d::Date)
+    if ! haskey(g.bills, d)
+        println("< \e[93m", d, "\e[0m > has no bills!") 
+        return nothing
+    end
+    if ! haskey(g.bills[d], s)
+        println("< \e[93m", d, "\e[0m > has no bill: \e[33m", s, "\e[0m !")
+        return nothing
+    end
+    print_bill(g.bills[d][s])
+end
 print_bill(g::PayGroup, s::String, d) = print_bill(g, s, Date(d))
 print_bill(g::PayGroup, s::String) = print_bill(g, s, today())
 print_bill_today(g::PayGroup) = print_bill(g, today())
@@ -226,19 +236,6 @@ end
 Generate a `PayGroup` interactively.
 """
 function gen_paygrp()
-    if isfile("groupay.jld2")
-        println("A saved \e[32mPayGroup\e[0m has been detected!")
-        println("Do you want to load it?([y]/n)")
-        shouldLoad = readline()
-        if shouldLoad == "n"
-            println("Then let's start a new group.")
-        else
-            payGrp = load_paygrp("groupay.jld2")
-            println("The saved group has been loaded! ^_^")
-            payGrp = add_member!(payGrp)
-            return payGrp
-        end
-    end
 
     println("What's the name of your group?")
     title = readline()
@@ -296,11 +293,6 @@ function add_member!(payGrp::PayGroup)
     for x in keys(payGrp.members)
         println("\e[36m", x, "\e[0m")
     end
-    println("\nDo you want to add more members?([y]/n)")
-    shouldAddMem = readline()
-    if shouldAddMem == "n"
-        return payGrp
-    end
 
     println("\n(\e[31mWarning\e[0m: Repeated names may crash the whole process!)\n")
     println("Who else do you want to add?")
@@ -337,12 +329,13 @@ function add_member!(payGrp::PayGroup)
     return payGrp
 end
 
-"""
-    add_bills!(payGrp::PayGroup) -> payGrp::PayGroup
 
-    Add bills to a `PayGroup`.
 """
-function add_bills!(payGrp::PayGroup)
+    add_bills!(payGrp::PayGroup, insertDate::Date) -> payGrp::PayGroup
+
+    Add bills on `insertDate` to `payGrp`.
+"""
+function add_bills!(payGrp::PayGroup, insertDate::Date)
     println()
 
     if length(payGrp.members) == 1
@@ -354,7 +347,7 @@ function add_bills!(payGrp::PayGroup)
         end
 
         if ! isempty(payGrp.bills)
-            println("And the following bills are added:")
+            println("Current bills:")
             for (date, dateBills) in payGrp.bills
                 println("< \e[93m", date, "\e[0m >")
                 for billname in keys(dateBills)
@@ -362,11 +355,11 @@ function add_bills!(payGrp::PayGroup)
                 end
             end
             println()
-            println("What's your next bill to add?")
+            println("What's your next bill to add for < \e[93m", insertDate, "\e[0m >?")
         else
             println("Then let's review your bills together.")
             println()
-            println("What's your first bill to add?")
+            println("What's your first bill to add for < \e[93m", insertDate, "\e[0m >?")
         end
 
         while true
@@ -377,7 +370,7 @@ function add_bills!(payGrp::PayGroup)
                 println("So please name your bill:")
                 billname = readline()
             end
-            bill = Bill(billname, today())
+            bill = Bill(billname, insertDate)
 
             println("And how much have you paid for \e[33m", billname, "\e[0m?")
             payTotal = undef
@@ -393,26 +386,26 @@ function add_bills!(payGrp::PayGroup)
                 end
             end
             tmpMemHasPaid = payGrp.members[payMan].hasPaid
-            if haskey(tmpMemHasPaid, today())
-                push!(tmpMemHasPaid[today()], billname => payTotal)
+            if haskey(tmpMemHasPaid, insertDate)
+                push!(tmpMemHasPaid[insertDate], billname => payTotal)
             else
-                push!(tmpMemHasPaid, today() => Dict(billname => payTotal))
+                push!(tmpMemHasPaid, insertDate => Dict(billname => payTotal))
             end
             bill.total = payTotal
             bill.isAA = true
             bill.paidPy = payMan
             push!(bill.shouldPay, bill.paidPy => bill.total)
             tmpMemShouldPay = payGrp.members[payMan].shouldPay
-            if haskey(tmpMemShouldPay, today())
-                push!(tmpMemShouldPay[today()], billname => payTotal)
+            if haskey(tmpMemShouldPay, insertDate)
+                push!(tmpMemShouldPay[insertDate], billname => payTotal)
             else
-                push!(tmpMemShouldPay, today() => Dict(billname => payTotal))
+                push!(tmpMemShouldPay, insertDate => Dict(billname => payTotal))
             end
 
-            if haskey(payGrp.bills, today())
-                push!(payGrp.bills[today()], billname => bill)
+            if haskey(payGrp.bills, insertDate)
+                push!(payGrp.bills[insertDate], billname => bill)
             else
-                push!(payGrp.bills, today() => Dict(billname => bill))
+                push!(payGrp.bills, insertDate => Dict(billname => bill))
             end
 
             println()
@@ -437,7 +430,7 @@ function add_bills!(payGrp::PayGroup)
         println("\e[36m", x, "\e[0m")
     end
     if ! isempty(payGrp.bills)
-        println("And the following bills are added:")
+        println("Current bills:")
         for (date, dateBills) in payGrp.bills
             println("< \e[93m", date, "\e[0m >")
             for billname in keys(dateBills)
@@ -445,11 +438,11 @@ function add_bills!(payGrp::PayGroup)
             end
         end
         println()
-        println("What's your next bill to add?")
+        println("What's your next bill to add for < \e[93m", insertDate, "\e[0m >?")
     else
         println("Then let's review your bills together.")
         println()
-        println("What's your first bill to add?")
+        println("What's your first bill to add for < \e[93m", insertDate, "\e[0m >?")
     end
 
     while true
@@ -460,7 +453,7 @@ function add_bills!(payGrp::PayGroup)
             println("So please name your bill:")
             billname = readline()
         end
-        bill = Bill(billname, today())
+        bill = Bill(billname, insertDate)
 
         println("Who pays \e[33m", billname, "\e[0m?")
         payMan = undef
@@ -488,10 +481,10 @@ function add_bills!(payGrp::PayGroup)
             end
         end
         tmpMemHasPaid = payGrp.members[payMan].hasPaid
-        if haskey(tmpMemHasPaid, today())
-            push!(tmpMemHasPaid[today()], billname => payTotal)
+        if haskey(tmpMemHasPaid, insertDate)
+            push!(tmpMemHasPaid[insertDate], billname => payTotal)
         else
-            push!(tmpMemHasPaid, today() => Dict(billname => payTotal))
+            push!(tmpMemHasPaid, insertDate => Dict(billname => payTotal))
         end
         bill.total = payTotal
 
@@ -552,25 +545,23 @@ function add_bills!(payGrp::PayGroup)
                 AAlist = keys(payGrp.members)
             end
             avgPay = bill.total / length(AAlist)
-            for name in keys(payGrp.members)
-                if name in AAlist
-                    push!(bill.shouldPay, name => avgPay)
-                end
+            if name in AAlist
+                push!(bill.shouldPay, name => avgPay)
             end
         end
         for (name, val) in bill.shouldPay
             tmpMemShouldPay = payGrp.members[name].shouldPay
-            if haskey(tmpMemShouldPay, today())
-                push!(tmpMemShouldPay[today()], billname => val)
+            if haskey(tmpMemShouldPay, insertDate)
+                push!(tmpMemShouldPay[insertDate], billname => val)
             else
-                push!(tmpMemShouldPay, today() => Dict(billname => val))
+                push!(tmpMemShouldPay, insertDate => Dict(billname => val))
             end
         end
 
-        if haskey(payGrp.bills, today())
-            push!(payGrp.bills[today()], billname => bill)
+        if haskey(payGrp.bills, insertDate)
+            push!(payGrp.bills[insertDate], billname => bill)
         else
-            push!(payGrp.bills, today() => Dict(billname => bill))
+            push!(payGrp.bills, insertDate => Dict(billname => bill))
         end
 
         println()
@@ -589,259 +580,8 @@ function add_bills!(payGrp::PayGroup)
     end
     return payGrp
 end
-
-
-function add_bills!(payGrp::PayGroup, inputDate::Date)
-    println()
-
-    if length(payGrp.members) == 1
-        println("Ok, nice to meet you!")
-        payMan = undef
-        for x in keys(payGrp.members)
-            println("\e[36m", x, "\e[0m")
-            payMan = x
-        end
-
-        if ! isempty(payGrp.bills)
-            println("And the following bills are added:")
-            for (date, dateBills) in payGrp.bills
-                println("< \e[93m", date, "\e[0m >")
-                for billname in keys(dateBills)
-                    println("\e[33m", billname, "\e[0m")
-                end
-            end
-            println()
-            println("What's your next bill to add?")
-        else
-            println("Then let's review your bills together.")
-            println()
-            println("What's your first bill to add?")
-        end
-
-        while true
-            # meta info
-            billname = readline()
-            while isempty(billname)
-                println("It's better to give the bill a name, right? ^o^")
-                println("So please name your bill:")
-                billname = readline()
-            end
-            bill = Bill(billname, today())
-
-            println("And how much have you paid for \e[33m", billname, "\e[0m?")
-            payTotal = undef
-            while true
-                try
-                    tempExpr = Meta.parse(readline())
-                    payTotal = eval(tempExpr) |> Float64
-                    println(tempExpr, " = ", payTotal)
-                    break
-                catch
-                    print("Oops, \e[31minvalid\e[0m money input! ")
-                    print("Please input a \e[32mnumber\e[0m or \e[32mmath-expression\e[0m:\n")
-                end
-            end
-            tmpMemHasPaid = payGrp.members[payMan].hasPaid
-            if haskey(tmpMemHasPaid, today())
-                push!(tmpMemHasPaid[today()], billname => payTotal)
-            else
-                push!(tmpMemHasPaid, today() => Dict(billname => payTotal))
-            end
-            bill.total = payTotal
-            bill.isAA = true
-            bill.paidPy = payMan
-            push!(bill.shouldPay, bill.paidPy => bill.total)
-            tmpMemShouldPay = payGrp.members[payMan].shouldPay
-            if haskey(tmpMemShouldPay, today())
-                push!(tmpMemShouldPay[today()], billname => payTotal)
-            else
-                push!(tmpMemShouldPay, today() => Dict(billname => payTotal))
-            end
-
-            if haskey(payGrp.bills, today())
-                push!(payGrp.bills[today()], billname => bill)
-            else
-                push!(payGrp.bills, today() => Dict(billname => bill))
-            end
-
-            println()
-            print_bill(bill)
-
-            println()
-            println("And do you have another bill?([y]/n)")
-            hasNextBill = readline()
-            if hasNextBill == "n"
-                break
-            else
-                println()
-                println("(\e[32mTip:\e[0m Overwrite \e[32many\e[0m previous bill by inputting the same name.)\n")
-                println("What's your next bill?")
-            end
-        end
-        return payGrp
-    end
-
-    println("Ok, nice to meet you all!")
-    for x in keys(payGrp.members)
-        println("\e[36m", x, "\e[0m")
-    end
-    if ! isempty(payGrp.bills)
-        println("And the following bills are added:")
-        for (date, dateBills) in payGrp.bills
-            println("< \e[93m", date, "\e[0m >")
-            for billname in keys(dateBills)
-                println("\e[33m", billname, "\e[0m")
-            end
-        end
-        println()
-        println("What's your next bill to add?")
-    else
-        println("Then let's review your bills together.")
-        println()
-        println("What's your first bill to add?")
-    end
-
-    while true
-        # meta info
-        billname = readline()
-        while isempty(billname)
-            println("It's better to give the bill a name, right? ^o^")
-            println("So please name your bill:")
-            billname = readline()
-        end
-        bill = Bill(billname, today())
-
-        println("Who pays \e[33m", billname, "\e[0m?")
-        payMan = undef
-        while true
-            payMan = readline()
-            if payMan in keys(payGrp.members)
-                break
-            else
-                println("Oops, \e[36m", payMan, "\e[0m is not in your group! Please input the name again:")
-            end
-        end
-        bill.paidPy = payMan
-
-        println("And how much has \e[36m", payMan, "\e[0m paid?")
-        payTotal = undef
-        while true
-            try
-                tempExpr = Meta.parse(readline())
-                payTotal = eval(tempExpr) |> Float64
-                println(tempExpr, " = ", payTotal)
-                break
-            catch
-                print("Oops, \e[31minvalid\e[0m money input! ")
-                print("Please input a \e[32mnumber\e[0m or \e[32mmath-expression\e[0m:\n")
-            end
-        end
-        tmpMemHasPaid = payGrp.members[payMan].hasPaid
-        if haskey(tmpMemHasPaid, today())
-            push!(tmpMemHasPaid[today()], billname => payTotal)
-        else
-            push!(tmpMemHasPaid, today() => Dict(billname => payTotal))
-        end
-        bill.total = payTotal
-
-        # details
-        println("Do you \e[34mAA\e[0m?([y]/n)")
-        isAA = readline()
-        if isAA == "n"
-            isAA = false
-            bill.isAA = isAA
-
-            tmpBill = undef
-            while true
-                tmpBill = Bill(bill)
-                println("How much should each member pay?")
-                for name in keys(payGrp.members)
-                    print("\e[36m", name, "\e[0m : ")
-                    tmpShouldPay = undef
-                    while true
-                        try
-                            tempExpr = Meta.parse(readline())
-                            tmpShouldPay = eval(tempExpr) |> Float64
-                            println(tempExpr, " = ", tmpShouldPay)
-                            break
-                        catch
-                            println("\e[31mInvalid\e[0m number expression!")
-                            print("\e[36m", name, "\e[0m : ")
-                        end
-                    end
-                    push!(tmpBill.shouldPay, name => tmpShouldPay)
-                end
-
-                if tmpBill.total != sum(values(tmpBill.shouldPay))
-                    println()
-                    println("Oops! The sum of money doesn't match the total \e[32m", tmpBill.total, "\e[0m!")
-                    println("Please input again.")
-                else
-                    bill = tmpBill
-                    break
-                end
-            end
-        else
-            isAA = true
-            bill.isAA = isAA
-
-            println("\e[34mAA\e[0m on all the members?([y]/n)")
-            isAllAA = readline()
-            AAlist = []
-            if isAllAA == "n"
-                println("Check [y]/n ?")
-                for name in keys(payGrp.members)
-                    print("\e[36m", name, "\e[0m : ")
-                    tmpIsAA = readline()
-                    if tmpIsAA != "n"
-                        push!(AAlist, name)
-                    end
-                end
-            else
-                AAlist = keys(payGrp.members)
-            end
-            avgPay = bill.total / length(AAlist)
-            for name in keys(payGrp.members)
-                if name in AAlist
-                    push!(bill.shouldPay, name => avgPay)
-                end
-            end
-        end
-        for (name, val) in bill.shouldPay
-            tmpMemShouldPay = payGrp.members[name].shouldPay
-            if haskey(tmpMemShouldPay, today())
-                push!(tmpMemShouldPay[today()], billname => val)
-            else
-                push!(tmpMemShouldPay, today() => Dict(billname => val))
-            end
-        end
-
-        if haskey(payGrp.bills, today())
-            push!(payGrp.bills[today()], billname => bill)
-        else
-            push!(payGrp.bills, today() => Dict(billname => bill))
-        end
-
-        println()
-        print_bill(bill)
-
-        println()
-        println("And do you have another bill?([y]/n)")
-        hasNextBill = readline()
-        if hasNextBill == "n"
-            break
-        else
-            println()
-            println("(\e[32mTip:\e[0m Overwrite \e[32many\e[0m previous bill by inputting the same name.)\n")
-            println("What's your next bill?")
-        end
-    end
-    return payGrp
-end
-
-
-
-
+add_bills!(g::PayGroup, d) = add_bills!(g, Date(d))
+add_bills!(g::PayGroup) = add_bills!(g, today())
 
 
 """
