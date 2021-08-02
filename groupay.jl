@@ -5,9 +5,9 @@
 #    / /_/ / /  / /_/ / /_/ / /_/ / /_/ / /_/ /
 #    \____/_/   \____/\__,_/ .___/\__,_/\__, /
 #                         /_/          /____/
-# 
+#
 #   A simple interactive group payment solution.
-# 
+#
 # Copyright: Zhou Feng @ https://github.com/zfengg/groupay
 # ---------------------------------------------------------------------------- #
 module Groupay
@@ -79,7 +79,7 @@ end
 """
     print_member(x::PayGroup)
 
-    Print payment information for all the members in `x::PayGroup`.
+payment information for all the members in `x::PayGroup`.
 """
 function print_member(g::PayGroup)
     println("\n======\n")
@@ -92,7 +92,7 @@ end
 """
     gen_paygrp() -> payGrp::PayGroup
 
-    Generate a `PayGroup` interactively.
+Generate a `PayGroup` interactively.
 """
 function gen_paygrp()
     println("What's the name of your group?")
@@ -142,7 +142,7 @@ end
 """
     add_member!(x::PayGroup) -> x::PayGroup
 
-    Add more members to a `PayGroup` interactively.
+Add more members to a `PayGroup` interactively.
 """
 function add_member!(payGrp::PayGroup)
     println("Let's add more members!")
@@ -187,7 +187,7 @@ function add_member!(payGrp::PayGroup)
 end
 
 """
-    Generate 'billDetails' from a `::Dict`.
+Generate 'billDetails' from a `::Dict`.
 """
 function get_bill_details(m::Dict, bn::String)
     billDetails = Dict()
@@ -203,7 +203,7 @@ get_bill_details(g::PayGroup, bn::String) = get_bill_details(g.members, bn)
 """
     print_bill(billname::String, x::PayGroup)
 
-    Print the information of bills.
+Print the information of bills.
 """
 function print_bill(g::PayGroup, bn::String)
     if ! haskey(g.billMetaInfo, bn)
@@ -240,8 +240,7 @@ end
 """
     print_bill(x::PayGroup)
 
-    Print the information of all the bills in `x::PayGroup`.
-
+Print the information of all the bills in `x::PayGroup`.
 """
 function print_bill(g::PayGroup)
     println("\n======\n")
@@ -255,7 +254,7 @@ end
 """
     add_bills!(payGrp::PayGroup) -> payGrp::PayGroup
 
-    Add bills to a `PayGroup`.
+Add bills to a `PayGroup`.
 """
 function add_bills!(payGrp::PayGroup)
     println()
@@ -541,12 +540,6 @@ function print_soln(soln)
 end
 print_soln(x::PayGroup) = print_soln(gen_soln(x))
 
-# # IO via JLD2
-# using JLD2: save_object, load_object
-# save_paygrp(f::String, g::PayGroup) = save_object(f, g)
-# save_paygrp(g::PayGroup) = save_paygrp("groupay.jld2", g)
-# load_paygrp(f::String) = load_object(f)
-# load_paygrp() = load_paygrp("groupay.jld2")
 
 end # module
 
