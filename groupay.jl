@@ -660,9 +660,9 @@ function cmd_flow(g::PayGroup)
 end
 
 # enter cmd mode
-println("\nDo you want to enter command mode?(y/[n])")
+println("\nDo you want to enter command mode?([y]/n)")
 willContinue = readline()
-if willContinue != "y"
+if willContinue == "n"
     println()
     println("Have a good day ~")
     exit()
