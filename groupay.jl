@@ -694,25 +694,25 @@ end # module
 
 # ----------------------------- interactive usage ---------------------------- #
 using .Groupay
-manual = [
-    ["g", "show meta-info of your group"],
-    ["s", "show payment solution"],
-    ["b", "show all bills"],
-    ["b foo", "show bill named by \e[33mfoo\e[0m"],
-    ["bt", "show only \e[93mtoday\e[0m's bills"],
-    ["bt foo", "show \e[93mtoday\e[0m's bill named by \e[33mfoo\e[0m"],
-    ["m", "show bills of all members"],
-    ["m bar", "show all the bills of \e[36mbar\e[0m"],
-    ["m bar 2021-8-1", "show bills of \e[36mbar\e[0m on \e[93m2021-8-1\e[0m"],
-    ["mt", "show \e[93mtoday\e[0m's bills for each member"],
-    ["mt bar", "show only \e[93mtoday\e[0m's bills of \e[36mbar\e[0m "],
-    ["am", "add members"],
-    ["ab", "add bills \e[93mtoday\e[0m"],
-    ["ab 2008-8-8", "add bills on \e[93m2008-8-8\e[0m"],
-    ["sg", "save your group"],
-    ["lg", "load your group"],
-    ["dg", "delete your group"]
-]
+manual = (
+    ("g", "show meta-info of your group"),
+    ("s", "show payment solution"),
+    ("b", "show all bills"),
+    ("b foo", "show bill named by \e[33mfoo\e[0m"),
+    ("bt", "show only \e[93mtoday\e[0m's bills"),
+    ("bt foo", "show \e[93mtoday\e[0m's bill named by \e[33mfoo\e[0m"),
+    ("m", "show bills of all members"),
+    ("m bar", "show all the bills of \e[36mbar\e[0m"),
+    ("m bar 2021-8-1", "show bills of \e[36mbar\e[0m on \e[93m2021-8-1\e[0m"),
+    ("mt", "show \e[93mtoday\e[0m's bills for each member"),
+    ("mt bar", "show only \e[93mtoday\e[0m's bills of \e[36mbar\e[0m "),
+    ("am", "add members"),
+    ("ab", "add bills \e[93mtoday\e[0m"),
+    ("ab 2008-8-8", "add bills on \e[93m2008-8-8\e[0m"),
+    ("sg", "save your group"),
+    ("lg", "load your group"),
+    ("dg", "delete your group")
+)
 
 function print_man_element(cmd)
     println("  \e[32m", cmd[1], "\e[0m : ", cmd[2])
