@@ -24,7 +24,5 @@ Clone this repo or download [groupay.jl](groupay.jl)
 ```bash
 git clone https://github.com/zfengg/groupay.git
 cd groupay
-julia -iq groupay.jl
+julia groupay.jl
 ```
-
-The local usage provides `save_paygrp()` and `load_paygrp()` to save and load workspace via [JLD2.jl](https://github.com/JuliaIO/JLD2.jl).
