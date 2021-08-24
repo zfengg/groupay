@@ -1,6 +1,8 @@
 # groupay
 
-A simple interactive solution to group payment.
+Immigrated to [PayGroups.jl](https://github.com/zfengg/PayGroups.jl).
+
+A simple interactive solution to group payment. 
 
 Why this script?
 
