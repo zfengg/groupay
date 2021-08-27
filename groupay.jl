@@ -10,13 +10,6 @@
 #
 # Copyright: Zhou Feng @ https://github.com/zfengg/groupay
 # ---------------------------------------------------------------------------- #
-
-# * TODO: fix bugs during interactive usage
-# * TODO: reduce the `Date` user interface while keep the functioinalities
-# TODO: add rm_member() rm_bill()
-# * TODO: change colorprint into soft code
-# TODO: fix the logic add bills failed consider the `return`
-# * TODO: fix not-AA with 0.0 member
 module Groupay
 
 using Dates
@@ -401,6 +394,11 @@ function gen_paygrp()
 
     return payGrp
 end
+# ------------------------------------ ch ------------------------------------ #
+# TODO: create functions to change (update) 1. bills 2. member.name 
+
+# ------------------------------------ rm ------------------------------------ #
+# TODO: create functions to remove 1. bills. 2. members
 
 # ------------------------------------ add ----------------------------------- #
 """
