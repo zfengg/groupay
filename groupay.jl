@@ -15,9 +15,10 @@ module Groupay
 using Dates
 
 export Bill, Member, PayGroup
-export igroupay, cmd_flow, gen_paygrp, add_bills!, add_member!
-export print_member, print_bill, print_soln, print_meta_info
-export print_bill_today, print_member_today, print_billbyname
+export print_member, print_bill, print_soln, print_meta_info,
+        print_bill_today, print_member_today, print_billbyname
+export add_bills!, add_member!, rm_bill!, rm_member!, ch_bill!, ch_member!
+export igroupay, cmd_flow, gen_paygrp 
 
 # ---------------------------------- structs --------------------------------- #
 """
@@ -131,7 +132,7 @@ function print_member(m::Member, d::Date, showName::Bool=true)
     flagShouldPay = haskey(m.shouldPay, d)
 
     if (!flagHasPaid) && (!flagShouldPay)
-        println("Has no bills on", colorstring("$d", :date))
+        println()
         return nothing
     end
     println(colorstring("$d", :date))
@@ -198,6 +199,7 @@ print_member_today(g::PayGroup, m::String) = haskey(g.members, m) ? print_member
 function print_member_today(g::PayGroup)
     for m in values(g.members)
         print_member_today(m)
+        println()
     end
 end
 
@@ -394,11 +396,38 @@ function gen_paygrp()
 
     return payGrp
 end
+
 # ------------------------------------ ch ------------------------------------ #
-# TODO: create functions to change (update) 1. bills 2. member.name 
+function ch_bill!(g::PayGroup, bn::String, d::Date=today())
+    # TODO: change bill information
+end
+function ch_bill!(g::PayGroup, bn::String, d)
+    try 
+        ch_bill!(g::PayGroup, bn::String, d)
+    catch
+        print_invalid_date(d)
+    end
+end
+function ch_member!(g::PayGroup, m::String, nn::String)
+    # TODO: change name of a member 
+end
 
 # ------------------------------------ rm ------------------------------------ #
-# TODO: create functions to remove 1. bills. 2. members
+function rm_bill!(g::PayGroup, bn::String, d::Date=today())
+    # TODO: remove bills without hurting legibility
+end
+function rm_bill!(g::PayGroup, bn::String, d)
+    try 
+        rm_bill!(g::PayGroup, bn::String, d)
+    catch
+        print_invalid_date(d)
+    end
+end
+function rm_member!(g::PayGroup, m::String)
+    # TODO: remove member which will destroy all the related bills
+end
+
+# TODO: update `rm` and `ch` command manual
 
 # ------------------------------------ add ----------------------------------- #
 """
@@ -560,12 +589,7 @@ function add_bills!(payGrp::PayGroup, insertDate::Date)
     end
     if ! isempty(payGrp.bills)
         println("And you have added the following bills:")
-        for (date, dateBills) in payGrp.bills
-            println(colorstring("$date", :date))
-            for billname in keys(dateBills)
-                println(colorstring(billname, :bill))
-            end
-        end
+        print_meta_bills(payGrp)
         println("\nWhat's your next bill to add", isToday ? "" :  " on " * colorstring("$insertDate", :date), "?")
     else
         println("Then let's review your bills together.")
@@ -788,7 +812,7 @@ function gen_soln(payGrp::PayGroup)
     end
     return soln
 end
-print_soln(x::PayGroup) = print_soln(gen_soln(x))
+print_soln(g::PayGroup) = print_soln(gen_soln(g))
 
 # ------------------------------------ IO ------------------------------------ #
 # using JLD2: save_object, load_object
@@ -931,6 +955,7 @@ function cmd_flow(g::PayGroup)
     end
 end
 
+# TODO: reimplement the IO feature
 function check_savedgroup()
     if isfile("groupay.jld2")
         println("A group saved at $(colorstring("groupay.jld2", :green)) has been detected!")
