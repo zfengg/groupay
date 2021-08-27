@@ -12,10 +12,10 @@
 # ---------------------------------------------------------------------------- #
 
 # * TODO: fix bugs during interactive usage
-# TODO: reduce the `Date` user interface while keep the functioinalities
+# * TODO: reduce the `Date` user interface while keep the functioinalities
 # TODO: add rm_member() rm_bill()
-# TODO: change colorprint into soft code
-# TODO: fix the logic add bills failed consider the `return`
+# * TODO: change colorprint into soft code
+#  TODO: fix the logic add bills failed consider the `return`
 # * TODO: fix not-AA with 0.0 member
 module Groupay
 
