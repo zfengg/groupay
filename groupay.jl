@@ -6,7 +6,7 @@
 #    \____/_/   \____/\__,_/ .___/\__,_/\__, /
 #                         /_/          /____/
 #
-#   A simple interactive group payment solution.
+#   A simple interactive solution to group payment.
 #
 # Copyright: Zhou Feng @ https://github.com/zfengg/groupay
 # ---------------------------------------------------------------------------- #
@@ -15,7 +15,7 @@
 # * TODO: reduce the `Date` user interface while keep the functioinalities
 # TODO: add rm_member() rm_bill()
 # * TODO: change colorprint into soft code
-#  TODO: fix the logic add bills failed consider the `return`
+# TODO: fix the logic add bills failed consider the `return`
 # * TODO: fix not-AA with 0.0 member
 module Groupay
 
@@ -118,7 +118,7 @@ const COLORS = Dict(
 colorstring(s::String, c::Symbol) = COLORS[c] * s * "\033[0m"
 
 # print errors
-function print_invalidDate(d)
+function print_invalid_date(d)
     println(colorstring("Invalid DateFormat: ", :error), colorstring("$d", :date), " is not a valid date format!")
     println("Please input date like ", colorstring("$(today())", :tip))
 end
@@ -165,7 +165,7 @@ function print_member(m::Member, d, showName::Bool=true)
     try
         print_member(m, Date(d), showName)
     catch
-        print_invalidDate(d)
+        print_invalid_date(d)
     end
 end
 function print_member(m::Member)
@@ -190,13 +190,12 @@ function print_member(g::PayGroup)
     println("======\n")
 end
 
-
 print_member(g::PayGroup, m::String, d::Date) = haskey(g.members, m) ? print_member(g.members[m], d) : print_not_in_group(m)
 function print_member(g::PayGroup, m::String, d)
     try
         print_member(g::PayGroup, m, Date(d))
     catch
-        print_invalidDate(d)
+        print_invalid_date(d)
     end
 end
 print_member(g::PayGroup, m::String) = haskey(g.members, m) ? print_member(g.members[m]) : print_not_in_group(m)
@@ -233,8 +232,6 @@ function print_meta_members(g::PayGroup)
 end
 
 function print_meta_bills(g::PayGroup)
-    # println("Group: ", colorstring("$(g.title)", :group))
-    # println("---")
     if ! isempty(g.bills)
         for (d, dateBills) in g.bills
             println(colorstring("$d", :date))
@@ -279,7 +276,7 @@ function print_bill(g::PayGroup, d)
     try
         print_bill(g, Date(d))
     catch
-        print_invalidDate(d)
+        print_invalid_date(d)
     end
 end
 
@@ -305,7 +302,7 @@ function print_bill(g::PayGroup, bn::String, d::Date)
         return nothing
     end
     if ! haskey(g.bills[d], bn)
-        println("No bill with name ", colorstring(bn, :bill)," !")
+        println("No bill named ", colorstring(bn, :bill)," !")
         return nothing
     end
     print_bill(g.bills[d][bn])
@@ -473,12 +470,6 @@ function add_bills!(payGrp::PayGroup, insertDate::Date)
 
         if ! isempty(payGrp.bills)
             println("And you have added the following bills:")
-            # for (date, dateBills) in payGrp.bills
-            #     println( colorstring("$date", :date) )
-            #     for billname in keys(dateBills)
-            #         println(colorstring(billname, :bill))
-            #     end
-            # end
             print_meta_bills(payGrp)
             println("\nWhat's your next bill to add", isToday ? "" :  " on " * colorstring("$insertDate", :date), "?")
         else
@@ -743,9 +734,7 @@ function add_bills!(g::PayGroup, d)
     try
         add_bills!(g, Date(d))
     catch
-        print_invalidDate(d)
-        # println(colorstring("Invalid DateFormat: ", :error), colorstring("$d", :date), "is not a valid date format!")
-        # println("Please input dates like ", colorstring("$(today())", :tip))
+        print_invalid_date(d)
     end
 end
 add_bills!(g::PayGroup) = add_bills!(g, today())
@@ -852,12 +841,12 @@ function print_manual(man, t::String="Command Manual")
 end
 print_manual() = print_manual(MANUAL)
 
-print_invalidcmd() = println(colorstring("Invalid", :error), " command! Please input again.")
+print_invalid_cmd() = println(colorstring("Invalid", :error), " command!")
 function exec_cmd(g::PayGroup, nextCmd)
     nextCmd = split(nextCmd)
     nextCmd = String.(nextCmd)
     if isempty(nextCmd)
-        print_invalidcmd()
+        print_invalid_cmd()
         return false
     end
 
@@ -924,7 +913,7 @@ function exec_cmd(g::PayGroup, nextCmd)
     #     rm("groupay.jld2")
     #     println("\e[31mgroupap.jl\e[0m deleted!")
     else
-        print_invalidcmd()
+        print_invalid_cmd()
     end
     return false
 end
@@ -1012,13 +1001,6 @@ function igroupay(shouldCheck=false)
     # generate group
     println()
     payGrp = gen_paygrp()
-    # add bills
-    # println("\nDo you want to add some bills?([y]/n)")
-    # a = readline()
-    # if a == "n"
-    #     println("\nHave a good day ~")
-    #     return payGrp
-    # end
     if shouldCheck
         println("And on today?([y]/n)")
         onToday = readline()
@@ -1084,6 +1066,6 @@ end
 
 end # module
 
-# run tests
+# run
 using .Groupay
 igroupay()
