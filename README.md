@@ -6,4 +6,4 @@ It solves the frequent but annoying payment issues in our life, especially after
 
 [![asciicast](https://asciinema.org/a/427746.svg)](https://asciinema.org/a/427746?t=7)
 
-> Try it out @ [Repl.it](https://replit.com/@zfengg/groupay#groupay.jl). It's fun!
+> Try it out @ [Repl.it](https://replit.com/@zfengg/groupay). It's fun!
