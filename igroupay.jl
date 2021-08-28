@@ -10,15 +10,16 @@
 #
 # Copyright: Zhou Feng @ https://github.com/zfengg/groupay
 # ---------------------------------------------------------------------------- #
-# module Groupay
+module Groupay
 
 using Dates
 
-# export Bill, Member, PayGroup
-# export print_member, print_bill, print_soln, print_meta_info,
-#         print_bill_today, print_member_today, print_billbyname
-# export add_bills!, add_member!, rm_bill!, rm_member!, ch_bill!, ch_member!
-# export igroupay, cmd_flow, gen_paygrp 
+export Bill, Member, PayGroup
+export print_member, print_bill, print_soln, print_meta_info,
+        print_bill_today, print_member_today, print_billbyname
+export add_bills!, add_member!, rm_bill!, rm_member!, ch_bill!, ch_member!
+export igroupay, cmd_flow, gen_paygrp 
+export check_savedgroup, print_greetings
 
 # ---------------------------------- structs --------------------------------- #
 """
@@ -1009,9 +1010,13 @@ function print_greetings()
     println("We will provide you a payment solution for your group.")
 end
 
+end # module
+
+
 # ---------------------------------------------------------------------------- #
 #                                   igroupay                                   #
 # ---------------------------------------------------------------------------- #
+using .Groupay
 shouldCheck = false
 # greetings
 run(`clear`)
