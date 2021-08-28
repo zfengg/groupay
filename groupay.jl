@@ -77,29 +77,45 @@ get_total(g::PayGroup, d::Date) = haskey(g.bills, d) ? sum(b.total for b in valu
 get_total(g::PayGroup, d) = get_total(g, Date(d))
 
 # ----------------------------------- push ----------------------------------- #
-function push_hasPaid!(m::Member, bn::String, v::Float64, d::Date)
-    if haskey(m.hasPaid, d)
-        push!(m.hasPaid[d], bn => v)
-    else
-        push!(m.hasPaid, d => Dict(bn => v))
-    end
-    # return m
-end
-function push_shouldPay!(m::Member, bn::String, v::Float64, d::Date)
-    if haskey(m.shouldPay, d)
-        push!(m.shouldPay[d], bn => v)
-    else
-        push!(m.shouldPay, d => Dict(bn => v))
-    end
-    # return m
-end
+# function push_hasPaid!(m::Member, bn::String, v::Float64, d::Date)
+#     if haskey(m.hasPaid, d)
+#         push!(m.hasPaid[d], bn => v)
+#     else
+#         push!(m.hasPaid, d => Dict(bn => v))
+#     end
+#     # return m
+# end
+# function push_shouldPay!(m::Member, bn::String, v::Float64, d::Date)
+#     if haskey(m.shouldPay, d)
+#         push!(m.shouldPay[d], bn => v)
+#     else
+#         push!(m.shouldPay, d => Dict(bn => v))
+#     end
+#     # return m
+# end
 
 function push_bill!(g::PayGroup, b::Bill)
+    # g.bills
     if haskey(g.bills, b.date)
         push!(g.bills[b.date], b.billname => b)
     else
         push!(g.bills, b.date => Dict(b.billname => b))
     end
+    # m.hasPaid
+    if haskey(g.members[b.paidBy].hasPaid, b.date)
+        push!(g.members[b.paidBy].hasPaid[b.date], b.billname => b.total)
+    else
+        push!(g.members[b.paidBy].hasPaid, b.date => Dict(b.billname => b.total))
+    end
+    # m.shouldPay
+    for (m, v) in b.shouldPay  
+        if haskey(g.members[m].shouldPay, b.date)
+            push!(g.members[m].shouldPay[b.date], b.billname => v)
+        else
+            push!(g.members[m].shouldPay, b.date => Dict(b.billname => v))
+        end
+    end
+     
     # return g
 end
 
@@ -110,20 +126,33 @@ function pop_bill!(g::PayGroup, b::Bill)
             pop!(g.bills, b.date)
         end
 
-        for m in values(g.members)
-            if haskey(m.hasPaid, b.date) && haskey(m.hasPaid[b.date], b.billname)
-                pop!(m.hasPaid[b.date], b.billname)
-                if isempty(m.hasPaid[b.date])
-                    pop!(m.hasPaid, b.date)
-                end
-            end
-            if haskey(m.shouldPay, b.date) && haskey(m.shouldPay[b.date], b.billname)
-                pop!(m.shouldPay[b.date], b.billname)
-                if isempty(m.shouldPay[b.date])
-                    pop!(m.shouldPay, b.date)
-                end
+        # m.hasPaid 
+        pop!(g.members[b.paidBy].hasPaid[b.date], b.billname)
+        if isempty(g.members[b.paidBy].hasPaid[b.date])
+            pop!(g.members[b.paidBy].hasPaid, b.date)
+        end
+
+        # m.shouldPay
+        for m in keys(b.shouldPay)  
+            pop!(g.members[m].shouldPay[b.date], b.billname)
+            if isempty(g.members[m].shouldPay[b.date])
+                pop!(g.members[m].shouldPay, b.date)
             end
         end
+        # for m in values(g.members)
+        #     if haskey(m.hasPaid, b.date) && haskey(m.hasPaid[b.date], b.billname)
+        #         pop!(m.hasPaid[b.date], b.billname)
+        #         if isempty(m.hasPaid[b.date])
+        #             pop!(m.hasPaid, b.date)
+        #         end
+        #     end
+        #     if haskey(m.shouldPay, b.date) && haskey(m.shouldPay[b.date], b.billname)
+        #         pop!(m.shouldPay[b.date], b.billname)
+        #         if isempty(m.shouldPay[b.date])
+        #             pop!(m.shouldPay, b.date)
+        #         end
+        #     end
+        # end
     end
 end
 
@@ -557,18 +586,21 @@ function ch_bill!(g::PayGroup, bn::String, d::Date=today())
         if shouldChName == "n"
             return nothing
         end
-        # update paidBy 
-        pop!(g.members[oldBill.paidBy].hasPaid[d], bn) 
-        push!(g.members[oldBill.paidBy].hasPaid[d], newBillname) 
-        # update shouldPay
-        for (m, v) in oldBill.shouldPay
-            pop!(g.members[m].shouldPay[d], bn)
-            push!(g.members[m].shouldPay[d], newBillname => v) 
-        end
-        # update bills
-        pop!(g.bills[d], bn)
+        pop_bill!(g, oldBill)
         oldBill.billname = newBillname
-        push!(g.bills[d], newBillname => oldBill)
+        push_bill!(g, oldBill)
+        # # update paidBy 
+        # pop!(g.members[oldBill.paidBy].hasPaid[d], bn) 
+        # push!(g.members[oldBill.paidBy].hasPaid[d], newBillname => oldBill.total) 
+        # # update shouldPay
+        # for (m, v) in oldBill.shouldPay
+        #     pop!(g.members[m].shouldPay[d], bn)
+        #     push!(g.members[m].shouldPay[d], newBillname => v) 
+        # end
+        # # update bills
+        # pop!(g.bills[d], bn)
+        # oldBill.billname = newBillname
+        # push!(g.bills[d], newBillname => oldBill)
 
         println()
         print_bill(oldBill)
@@ -581,18 +613,20 @@ function ch_bill!(g::PayGroup, bn::String, d::Date=today())
         payTotal = read_valid_money()
         if shouldChName == "n"
             g.members[oldBill.paidBy].hasPaid[d][bn] = payTotal
-            g.members[oldBill.paidBy].should[d][bn] = payTotal
+            g.members[oldBill.paidBy].shouldPay[d][bn] = payTotal
             g.bills[d][bn].total = payTotal
             return g
         end
-        pop!(g.members[oldBill.paidBy].hasPaid[d], bn) 
-        pop!(g.members[oldBill.paidBy].shouldPay[d], bn) 
-        pop!(g.bills[d], bn)
+        # pop!(g.members[oldBill.paidBy].hasPaid[d], bn) 
+        # pop!(g.members[oldBill.paidBy].shouldPay[d], bn) 
+        # pop!(g.bills[d], bn)
+        pop_bill!(g, oldBill)
         oldBill.total = payTotal
         oldBill.billname = newBillname
-        push!(g.members[oldBill.paidBy].hasPaid[d], newBillname => payTotal) 
-        push!(g.members[oldBill.paidBy].shouldPay[d], newBillname => payTotal) 
-        push!(g.bills[d], newBillname => oldBill)
+        # push!(g.members[oldBill.paidBy].hasPaid[d], newBillname => payTotal) 
+        # push!(g.members[oldBill.paidBy].shouldPay[d], newBillname => payTotal) 
+        # push!(g.bills[d], newBillname => oldBill)
+        push_bill!(g, oldBill)
 
         println()
         print_bill(oldBill)
@@ -601,10 +635,9 @@ function ch_bill!(g::PayGroup, bn::String, d::Date=today())
 
     # more members mode 
     if shouldChName == "n"
-        newBill = Bill(bn, d)
-    else
-        newBill = Bill(newBillname, d)
+        newBillname = bn
     end
+    newBill = Bill(newBillname, d)
 
     println("Who pays ", colorstring(newBillname, :bill), "?")
     payMan = read_valid_member(g)
@@ -612,7 +645,7 @@ function ch_bill!(g::PayGroup, bn::String, d::Date=today())
 
     println("And how much has ", colorstring(payMan, :member), " paid?")
     payTotal = read_valid_money()
-    push_hasPaid!(g.members[payMan], newBillname, payTotal, d)
+    # push_hasPaid!(g.members[payMan], newBillname, payTotal, d)
     newBill.total = payTotal
     # g.members[payMan] = push_hasPaid!(g.members[payMan], newBillname, payTotal, d)
     # tmpMemHasPaid = g.members[payMan].hasPaid
@@ -696,16 +729,16 @@ function ch_bill!(g::PayGroup, bn::String, d::Date=today())
         end
     end
 
-    for (m, v) in newBill.shouldPay
-        push_shouldPay!(g.members[m], newBillname, v, d)
-        # g.members[m] = push_shouldPay!(g.members[m], newBillname, v, d)
-        # tmpMemShouldPay = g.members[m].shouldPay
-        # if haskey(tmpMemShouldPay, d)
-        #     push!(tmpMemShouldPay[d], newBillname => v)
-        # else
-        #     push!(tmpMemShouldPay, d => Dict(newBillname => v))
-        # end
-    end
+    # for (m, v) in newBill.shouldPay
+    #     push_shouldPay!(g.members[m], newBillname, v, d)
+    #     # g.members[m] = push_shouldPay!(g.members[m], newBillname, v, d)
+    #     # tmpMemShouldPay = g.members[m].shouldPay
+    #     # if haskey(tmpMemShouldPay, d)
+    #     #     push!(tmpMemShouldPay[d], newBillname => v)
+    #     # else
+    #     #     push!(tmpMemShouldPay, d => Dict(newBillname => v))
+    #     # end
+    # end
 
     # if haskey(g.bills, d)
     #     push!(g.bills[d], newBillname => bill)
