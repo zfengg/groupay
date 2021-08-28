@@ -29,9 +29,9 @@ mutable struct Bill
     date::Date
     total::Float64
     isAA::Bool
-    paidPy::String
+    paidBy::String
     shouldPay::Dict{String, Float64}
-    Bill(bill::Bill) = new(bill.billname, bill.date, bill.total, bill.isAA, bill.paidPy, Dict())
+    Bill(bill::Bill) = new(bill.billname, bill.date, bill.total, bill.isAA, bill.paidBy, Dict())
     Bill(bn::String, d::Date) = new(bn, d, NaN, true, "", Dict())
 end
 
@@ -76,6 +76,57 @@ get_topay(m::Member) = get_shouldpay(m) - get_haspaid(m)
 get_total(g::PayGroup, d::Date) = haskey(g.bills, d) ? sum(b.total for b in values(g.bills[d])) : 0.
 get_total(g::PayGroup, d) = get_total(g, Date(d))
 
+# ----------------------------------- push ----------------------------------- #
+function push_hasPaid!(m::Member, bn::String, v::Float64, d::Date)
+    if haskey(m.hasPaid, d)
+        push!(m.hasPaid[d], bn => v)
+    else
+        push!(m.hasPaid, d => Dict(bn => v))
+    end
+    # return m
+end
+function push_shouldPay!(m::Member, bn::String, v::Float64, d::Date)
+    if haskey(m.shouldPay, d)
+        push!(m.shouldPay[d], bn => v)
+    else
+        push!(m.shouldPay, d => Dict(bn => v))
+    end
+    # return m
+end
+
+function push_bill!(g::PayGroup, b::Bill)
+    if haskey(g.bills, b.date)
+        push!(g.bills[b.date], b.billname => b)
+    else
+        push!(g.bills, b.date => Dict(b.billname => b))
+    end
+    # return g
+end
+
+function pop_bill!(g::PayGroup, b::Bill)
+    if haskey(g.bills, b.date) && haskey(g.bills[b.date], b.billname)
+        pop!(g.bills[b.date], b.billname)
+        if isempty(g.bills[b.date])
+            pop!(g.bills, b.date)
+        end
+
+        for m in values(g.members)
+            if haskey(m.hasPaid, b.date) && haskey(m.hasPaid[b.date], b.billname)
+                pop!(m.hasPaid[b.date], b.billname)
+                if isempty(m.hasPaid[b.date])
+                    pop!(m.hasPaid, b.date)
+                end
+            end
+            if haskey(m.shouldPay, b.date) && haskey(m.shouldPay[b.date], b.billname)
+                pop!(m.shouldPay[b.date], b.billname)
+                if isempty(m.shouldPay[b.date])
+                    pop!(m.shouldPay, b.date)
+                end
+            end
+        end
+    end
+end
+
 # ----------------------------------- print ---------------------------------- #
 # dictionary of colors
 const COLORS = Dict(
@@ -109,7 +160,7 @@ const COLORS = Dict(
     :warning => "\033[33m",
     :error => "\033[31m",
 )
-colorstring(s::String, c::Symbol) = COLORS[c] * s * "\033[0m"
+colorstring(s, c::Symbol) = COLORS[c] * s * "\033[0m"
 
 # print errors
 function print_invalid_date(d)
@@ -246,7 +297,7 @@ Print the information of bills.
 """
 function print_bill(b::Bill)
     println("[", colorstring(b.billname, :bill), "]")
-    println("total = ", colorstring("$(b.total)", :total), " paid by ", colorstring(b.paidPy, :member),";")
+    println("total = ", colorstring("$(b.total)", :total), " paid by ", colorstring(b.paidBy, :member),";")
     if b.isAA
         println("-- ", colorstring("AA", :aa), " --")
     else
@@ -412,20 +463,7 @@ function gen_paygrp()
     return payGrp
 end
 
-# ------------------------------------ ch ------------------------------------ #
-function add_bill!(g::PayGroup, bn::String, d::Date=today(), isSingle::Bool=false)
-    if isSingle
-    
-    else
-    end
-end
-
-# function greet_members(g::PayGroup)
-#     println("Nice to meet you!")
-#     for m in keys(g.members)
-#         println(colorstring(m, :member)) 
-#     end
-# end
+# ----------------------------------- read ----------------------------------- #
 function read_nonempty_string()
     s = readline()
     while isempty(s)
@@ -454,80 +492,233 @@ function read_valid_money()
     return x
 end
 
+function read_valid_member(g::PayGroup)
+    m = undef
+    while true
+        m = readline()
+        m = strip(m)
+        if m in keys(g.members)
+            break
+        else
+            println("Oops, ", colorstring(m, :member), " is not in your group! Please input the name again:")
+        end
+    end
+    return m
+end
+
+# ------------------------------------ ch ------------------------------------ #
+function add_bill!(g::PayGroup, bn::String, d::Date=today(), isSingle::Bool=false)
+    if isSingle
+    
+    else
+    end
+end
+
+# function greet_members(g::PayGroup)
+#     println("Nice to meet you!")
+#     for m in keys(g.members)
+#         println(colorstring(m, :member)) 
+#     end
+# end
+
 function ch_bill!(g::PayGroup, bn::String, d::Date=today())
     # TODO: change bill information
     if ! hasbill(g, bn, d)
        return nothing 
     end
 
-    oldBill = g.bill[d][bn]
+    oldBill = g.bills[d][bn]
     println("The following bill will be changed:")
+    print_bill(oldBill)
+    println("\nAre you sure?([y]/n)")
+    a = readline()
+    if a == "n"
+        return nothing
+    end
+
+    println("Change the bill name?([y]/n)")
+    shouldChName = readline()
+    if shouldChName != "n"
+        println("What's the new bill name?") 
+        newBillname = undef
+        while true
+            newBillname = read_nonempty_string()
+            if ! haskey(g.bills[d], newBillname)
+                break
+            end
+            println(colorstring(newBillname, :bill), " already exists on ", colorstring("$d", :date))
+            prinlln("Please input again:")
+        end
+    end
+
+    println("Change the bill details?([y]/n)")
+    shouldChDetails = readline()
+    if shouldChDetails == "n"
+        if shouldChName == "n"
+            return nothing
+        end
+        # update paidBy 
+        pop!(g.members[oldBill.paidBy].hasPaid[d], bn) 
+        push!(g.members[oldBill.paidBy].hasPaid[d], newBillname) 
+        # update shouldPay
+        for (m, v) in oldBill.shouldPay
+            pop!(g.members[m].shouldPay[d], bn)
+            push!(g.members[m].shouldPay[d], newBillname => v) 
+        end
+        # update bills
+        pop!(g.bills[d], bn)
+        oldBill.billname = newBillname
+        push!(g.bills[d], newBillname => oldBill)
+
+        println()
         print_bill(oldBill)
-        println("Are you sure?([y]/n)")
-        a = readline()
-        if a == "n"
-           return nothing
+        return g
+    end
+
+    # get details
+    if length(g.members) == 1 
+        println("How much do you paid for ", colorstring(tmpBillname, :bill), "?")
+        payTotal = read_valid_money()
+        if shouldChName == "n"
+            g.members[oldBill.paidBy].hasPaid[d][bn] = payTotal
+            g.members[oldBill.paidBy].should[d][bn] = payTotal
+            g.bills[d][bn].total = payTotal
+            return g
+        end
+        pop!(g.members[oldBill.paidBy].hasPaid[d], bn) 
+        pop!(g.members[oldBill.paidBy].shouldPay[d], bn) 
+        pop!(g.bills[d], bn)
+        oldBill.total = payTotal
+        oldBill.billname = newBillname
+        push!(g.members[oldBill.paidBy].hasPaid[d], newBillname => payTotal) 
+        push!(g.members[oldBill.paidBy].shouldPay[d], newBillname => payTotal) 
+        push!(g.bills[d], newBillname => oldBill)
+
+        println()
+        print_bill(oldBill)
+        return g
+    end
+
+    # more members mode 
+    if shouldChName == "n"
+        newBill = Bill(bn, d)
+    else
+        newBill = Bill(newBillname, d)
+    end
+
+    println("Who pays ", colorstring(newBillname, :bill), "?")
+    payMan = read_valid_member(g)
+    newBill.paidBy = payMan
+
+    println("And how much has ", colorstring(payMan, :member), " paid?")
+    payTotal = read_valid_money()
+    push_hasPaid!(g.members[payMan], newBillname, payTotal, d)
+    newBill.total = payTotal
+    # g.members[payMan] = push_hasPaid!(g.members[payMan], newBillname, payTotal, d)
+    # tmpMemHasPaid = g.members[payMan].hasPaid
+    # if haskey(tmpMemHasPaid, d)
+    #     push!(tmpMemHasPaid[d], newBillname => payTotal)
+    # else
+    #     push!(tmpMemHasPaid, d => Dict(newBillname => payTotal))
+    # end
+
+    # details
+    println("Do you ", colorstring("AA", :aa), "?([y]/n)")
+    isAA = readline()
+    if isAA == "n"
+        isAA = false
+        newBill.isAA = isAA
+
+        tmpBill = undef
+        while true
+            tmpBill = Bill(newBill)
+            println("How much should each member pay? (", colorstring("j", :tip), " to jump)")
+            for m in keys(g.members)
+                tmpShouldPay = undef
+                while true
+                    print(colorstring(m, :member), " : ")
+                    try
+                        tmpInput = readline()
+                        if tmpInput in ("", "j")
+                            break
+                        end
+                        tempExpr = Meta.parse(tmpInput)
+                        tmpShouldPay = eval(tempExpr) |> Float64
+                        println(tempExpr, " = ", tmpShouldPay)
+                        break
+                    catch
+                        println(colorstring("Invalid", :error), " number expression!")
+                    end
+                end
+                tmpShouldPay != undef && push!(tmpBill.shouldPay, m => tmpShouldPay)
+            end
+
+            if tmpBill.total != sum(values(tmpBill.shouldPay))
+                println()
+                println("Oops! The sum of money doesn't match the total ", colorstring("$(tmpBill.total)", :warning), "!")
+                println("Please input again.")
+            else
+                newBill = tmpBill
+                break
+            end
         end
 
-        println("Change the bill name?([y]/n)")
-        shouldChName = readline()
-        if shouldChName != "n"
-            println("What's the new bill name?") 
-            newBillname = readline()
+    else
+        isAA = true
+        newBill.isAA = isAA
+
+        println(colorstring("AA", :aa), " on all the members?([y]/n)")
+        isAllAA = readline()
+        AAlist = []
+        if isAllAA == "n"
             while true
-                newBillname = read_nonempty_string()
-                if ! haskey(g.bills[d], newBillname)
+                println("Check [y]/n ?")
+                for m in keys(g.members)
+                    print(colorstring(m, :member), " : ")
+                    tmpIsAA = readline()
+                    if tmpIsAA != "n"
+                        push!(AAlist, m)
+                    end
+                end
+                if ! isempty(AAlist)
                     break
                 end
-                println(colorstring(newBillname, :bill), " already exists on ", colorstring("$d", :date))
-                prinlln("Please input again:")
+                println(colorstring("Oops!", :error), " No one is ", colorstring("AA", :aa), "!")
+                println()
             end
+        else
+            AAlist = keys(g.members)
         end
 
-        println("Change the bill details?([y]/n)")
-        shouldChDetails = readline()
-        if shouldChDetails == "n"
-            if shouldChName == "n"
-                return nothing
-            end
-            # update paidPy 
-            pop!(g.members[oldBill.paidBy].hasPaid[d], bn) 
-            push!(g.members[oldBill.paidBy].hasPaid[d], newBillname) 
-            # update shouldPay
-            for (m, v) in oldBill.shouldPay
-                pop!(g.members[m].shouldPay[d], bn)
-                push!(g.members[m].shouldPay[d], newBillname => v) 
-            end
-            # update bills
-            pop!(g.bills[d], bn)
-            oldBill.billname = newBillname
-            push!(g.bills[d], newBillname => oldBill)
-            return g
+        avgPay = newBill.total / length(AAlist)
+        for m in AAlist
+            push!(newBill.shouldPay, m => avgPay)
         end
+    end
 
-        # get details
-        if length(g.members) == 1 
-            println("How much do you paid for ", colorstring(tmpBillname, :bill), "?")
-            payTotal = read_valid_money()
-            if shouldChName == "n"
-                g.members[oldBill.paidPy].hasPaid[d][bn] = payTotal
-                g.members[oldBill.paidPy].should[d][bn] = payTotal
-                g.bills[d][bn].total = payTotal
-                return g
-            end
-            pop!(g.members[oldBill.paidPy].hasPaid[d], bn) 
-            pop!(g.members[oldBill.paidPy].shouldPay[d], bn) 
-            pop!(g.bills[d], bn)
-            oldBill.total = payTotal
-            oldBill.billname = newBillname
-            push!(g.members[oldBill.paidPy].hasPaid[d], newBillname => payTotal) 
-            push!(g.members[oldBill.paidPy].shouldPay[d], newBillname => payTotal) 
-            push!(g.bills[d], newBillname => oldBill)
-            return g
-        end
-        # more members mode 
-        # ! unfinished
+    for (m, v) in newBill.shouldPay
+        push_shouldPay!(g.members[m], newBillname, v, d)
+        # g.members[m] = push_shouldPay!(g.members[m], newBillname, v, d)
+        # tmpMemShouldPay = g.members[m].shouldPay
+        # if haskey(tmpMemShouldPay, d)
+        #     push!(tmpMemShouldPay[d], newBillname => v)
+        # else
+        #     push!(tmpMemShouldPay, d => Dict(newBillname => v))
+        # end
+    end
 
+    # if haskey(g.bills, d)
+    #     push!(g.bills[d], newBillname => bill)
+    # else
+    #     push!(g.bills, d => Dict(newBillname => bill))
+    # end
+    # g = push_bill!(g, newBill, d)
+    pop_bill!(g, oldBill)
+    push_bill!(g, newBill)
+
+    println()
+    print_bill(newBill)
+    return g
 end
 
 function ch_bill!(g::PayGroup, bn::String, d)
@@ -680,8 +871,8 @@ function add_bills!(payGrp::PayGroup, insertDate::Date)
             end
             bill.total = payTotal
             bill.isAA = true
-            bill.paidPy = payMan
-            push!(bill.shouldPay, bill.paidPy => bill.total)
+            bill.paidBy = payMan
+            push!(bill.shouldPay, bill.paidBy => bill.total)
             tmpMemShouldPay = payGrp.members[payMan].shouldPay
             if haskey(tmpMemShouldPay, insertDate)
                 push!(tmpMemShouldPay[insertDate], billname => payTotal)
@@ -761,7 +952,7 @@ function add_bills!(payGrp::PayGroup, insertDate::Date)
                 println("Oops, ", colorstring(payMan, :member), " is not in your group! Please input the name again:")
             end
         end
-        bill.paidPy = payMan
+        bill.paidBy = payMan
 
         println("And how much has ", colorstring(payMan, :member), " paid?")
         payTotal = undef
@@ -1062,6 +1253,8 @@ function exec_cmd(g::PayGroup, nextCmd)
         else
             add_bills!(g)
         end
+    elseif headCmd == "cb"
+        ch_bill!(g, nextCmd[2])
     # elseif headCmd == "sg"
     #     save_paygrp(g)
     #     println("Group saved!")
