@@ -188,6 +188,7 @@ const COLORS = Dict(
     :tip => "\033[32m",
     :warning => "\033[33m",
     :error => "\033[31m",
+    :danger => "\033[31m",
 )
 colorstring(s, c::Symbol) = COLORS[c] * s * "\033[0m"
 
@@ -373,7 +374,7 @@ end
 
 function hasbill(g::PayGroup, bn::String, d::Date=today()) 
     if ! haskey(g.bills, d)
-        println("No bills on", colorstring("$d", :date))
+        println("No bills on ", colorstring("$d", :date))
         return false
     end
     if ! haskey(g.bills[d], bn) 
@@ -551,7 +552,6 @@ end
 # end
 
 function ch_bill!(g::PayGroup, bn::String, d::Date=today())
-    # TODO: change bill information
     if ! hasbill(g, bn, d)
        return nothing 
     end
@@ -559,13 +559,9 @@ function ch_bill!(g::PayGroup, bn::String, d::Date=today())
     oldBill = g.bills[d][bn]
     println("The following bill will be changed:")
     print_bill(oldBill)
-    println("\nAre you sure?([y]/n)")
-    a = readline()
-    if a == "n"
-        return nothing
-    end
 
-    println("Change the bill name?([y]/n)")
+
+    println("\nChange the bill ", colorstring("name", :tip), "?([y]/n)")
     shouldChName = readline()
     if shouldChName != "n"
         println("What's the new bill name?") 
@@ -580,7 +576,7 @@ function ch_bill!(g::PayGroup, bn::String, d::Date=today())
         end
     end
 
-    println("Change the bill details?([y]/n)")
+    println("Change the ", colorstring("payment", :tip), " details?([y]/n)")
     shouldChDetails = readline()
     if shouldChDetails == "n"
         if shouldChName == "n"
@@ -767,7 +763,19 @@ end
 
 # ------------------------------------ rm ------------------------------------ #
 function rm_bill!(g::PayGroup, bn::String, d::Date=today())
-    # TODO: remove bills without hurting legibility
+    if ! hasbill(g, bn, d)
+        return nothing 
+    end
+    println("The following bill will be ", colorstring("removed", :danger), ":")
+    print_bill(g.bills[d][bn])
+    println("\nAre you sure?(y/[n])")
+    a = readline()
+    if a == "y"
+        pop_bill!(g, g.bills[d][bn])
+        println(colorstring(bn, :bill), " has been removed!")
+        return g
+    end
+    return g
 end
 function rm_bill!(g::PayGroup, bn::String, d)
     try 
@@ -1194,6 +1202,7 @@ const MANUAL = (
     ("am", "add members"),
     ("ab", "add bills"),
     ("cb foo", "change bill " * colorstring("foo", :bill)),
+    ("rb foo", "remove bill " * colorstring("foo", :bill)),
     ("hh", "help on $(colorstring("more", :warning)) commands"),
     # ("ab", "add bills \e[93mtoday\e[0m"),
     # ("ab 2008-8-8", "add bills on \e[93m2008-8-8\e[0m"),
@@ -1211,7 +1220,8 @@ const MOREMANUAL = (
     ("bt", "show today's bills"),
     ("bt foo", "show today's bill with name " * colorstring("foo", :bill)),
     ("ab 2021-8-1", "add bills on " * colorstring("2021-8-1", :date)),
-    ("cb foo 2021-8-1", "change bill " * colorstring("foo", :bill), " on " * colorstring("2021-8-1", :date)),
+    ("cb foo 2021-8-1", "change bill " * colorstring("foo", :bill) * " on " * colorstring("2021-8-1", :date)),
+    ("rb foo 2021-8-1", "remove bill " * colorstring("foo", :bill) * " on " * colorstring("2021-8-1", :date)),
 )
 
 function print_man_element(cmd)
@@ -1294,7 +1304,15 @@ function exec_cmd(g::PayGroup, nextCmd)
         elseif lenCmd >= 2
             ch_bill!(g, nextCmd[2])
         else
-            println("Please input the bill name to change.")
+            println("Please input a bill name to change.")
+        end
+    elseif headCmd == "rb"
+        if lenCmd >= 3
+            rm_bills!(g, nextCmd[2], nextCmd[3])
+        elseif lenCmd >= 2
+            rm_bill!(g, nextCmd[2])
+        else
+            println("Please input a bill name to remove.")
         end
     # elseif headCmd == "sg"
     #     save_paygrp(g)
