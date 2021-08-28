@@ -704,13 +704,20 @@ function add_bills!(payGrp::PayGroup, insertDate::Date)
             isAllAA = readline()
             AAlist = []
             if isAllAA == "n"
-                println("Check [y]/n ?")
-                for name in keys(payGrp.members)
-                    print(colorstring(name, :member), " : ")
-                    tmpIsAA = readline()
-                    if tmpIsAA != "n"
-                        push!(AAlist, name)
+                while true
+                    println("Check [y]/n ?")
+                    for name in keys(payGrp.members)
+                        print(colorstring(name, :member), " : ")
+                        tmpIsAA = readline()
+                        if tmpIsAA != "n"
+                            push!(AAlist, name)
+                        end
                     end
+                    if ! isempty(AAlist)
+                        break
+                    end
+                    println(colorstring("Oops!", :error), " AA at least on one member!")
+                    println("Please input again:")
                 end
             else
                 AAlist = keys(payGrp.members)
