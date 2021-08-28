@@ -1185,13 +1185,15 @@ print_soln(g::PayGroup) = print_soln(gen_soln(g))
 # ----------------------------- interactive usage ---------------------------- #
 const MANUAL = (
     ("g", "show meta-info of your group"),
+    ("gb", "show billnames"),
     ("s", "show payment solution"),
     ("b", "show all bills"),
-    ("b foo", "show bills with name " * colorstring("foo", :bill)),
-    ("m", "show all bills of each member"),
-    ("m bar", "show all bills of " * colorstring("bar", :member)),
+    ("b foo", "show bills named by " * colorstring("foo", :bill)),
+    ("m", "show all members' bills"),
+    ("m bar", "show bills belonging to " * colorstring("bar", :member)),
     ("am", "add members"),
     ("ab", "add bills"),
+    ("cb foo", "change bill " * colorstring("foo", :bill)),
     ("hh", "help on $(colorstring("more", :warning)) commands"),
     # ("ab", "add bills \e[93mtoday\e[0m"),
     # ("ab 2008-8-8", "add bills on \e[93m2008-8-8\e[0m"),
@@ -1201,7 +1203,6 @@ const MANUAL = (
 )
 
 const MOREMANUAL = (
-    ("gb", "show billnames"),
     ("gm", "show members"),
     ("bd 2021-8-1", "show bills on " * colorstring("2021-8-1", :date)),
     ("m bar 2021-8-1", "show bills of member " * colorstring("bar", :member) * " on " * colorstring("2021-8-1", :date)),
@@ -1210,6 +1211,7 @@ const MOREMANUAL = (
     ("bt", "show today's bills"),
     ("bt foo", "show today's bill with name " * colorstring("foo", :bill)),
     ("ab 2021-8-1", "add bills on " * colorstring("2021-8-1", :date)),
+    ("cb foo 2021-8-1", "change bill " * colorstring("foo", :bill), " on " * colorstring("2021-8-1", :date)),
 )
 
 function print_man_element(cmd)
@@ -1287,7 +1289,13 @@ function exec_cmd(g::PayGroup, nextCmd)
             add_bills!(g)
         end
     elseif headCmd == "cb"
-        ch_bill!(g, nextCmd[2])
+        if lenCmd >= 3
+            ch_bills!(g, nextCmd[2], nextCmd[3])
+        elseif lenCmd >= 2
+            ch_bill!(g, nextCmd[2])
+        else
+            println("Please input the bill name to change.")
+        end
     # elseif headCmd == "sg"
     #     save_paygrp(g)
     #     println("Group saved!")
