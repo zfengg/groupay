@@ -491,15 +491,15 @@ function ch_bill!(g::PayGroup, bn::String, d::Date=today())
                 return nothing
             end
             # update paidPy 
-            pop!(g.members[oldBill.paidBy].hasPaid[d], oldBill.billname) 
+            pop!(g.members[oldBill.paidBy].hasPaid[d], bn) 
             push!(g.members[oldBill.paidBy].hasPaid[d], newBillname) 
             # update shouldPay
             for (m, v) in oldBill.shouldPay
-                pop!(g.members[m].shouldPay[d], oldBill.billname)
+                pop!(g.members[m].shouldPay[d], bn)
                 push!(g.members[m].shouldPay[d], newBillname => v) 
             end
             # update bills
-            pop!(g.bills[d], oldBill.billname)
+            pop!(g.bills[d], bn)
             oldBill.billname = newBillname
             push!(g.bills[d], newBillname => oldBill)
             return g
@@ -509,9 +509,25 @@ function ch_bill!(g::PayGroup, bn::String, d::Date=today())
         if length(g.members) == 1 
             println("How much do you paid for ", colorstring(tmpBillname, :bill), "?")
             payTotal = read_valid_money()
-            
+            if shouldChName == "n"
+                g.members[oldBill.paidPy].hasPaid[d][bn] = payTotal
+                g.members[oldBill.paidPy].should[d][bn] = payTotal
+                g.bills[d][bn].total = payTotal
+                return g
+            end
+            pop!(g.members[oldBill.paidPy].hasPaid[d], bn) 
+            pop!(g.members[oldBill.paidPy].shouldPay[d], bn) 
+            pop!(g.bills[d], bn)
+            oldBill.total = payTotal
+            oldBill.billname = newBillname
+            push!(g.members[oldBill.paidPy].hasPaid[d], newBillname => payTotal) 
+            push!(g.members[oldBill.paidPy].shouldPay[d], newBillname => payTotal) 
+            push!(g.bills[d], newBillname => oldBill)
+            return g
         end
-         
+        # more members mode 
+        # ! unfinished
+
 end
 
 function ch_bill!(g::PayGroup, bn::String, d)
