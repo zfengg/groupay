@@ -10,15 +10,15 @@
 #
 # Copyright: Zhou Feng @ https://github.com/zfengg/groupay
 # ---------------------------------------------------------------------------- #
-module Groupay
+# module Groupay
 
 using Dates
 
-export Bill, Member, PayGroup
-export print_member, print_bill, print_soln, print_meta_info,
-        print_bill_today, print_member_today, print_billbyname
-export add_bills!, add_member!, rm_bill!, rm_member!, ch_bill!, ch_member!
-export igroupay, cmd_flow, gen_paygrp 
+# export Bill, Member, PayGroup
+# export print_member, print_bill, print_soln, print_meta_info,
+#         print_bill_today, print_member_today, print_billbyname
+# export add_bills!, add_member!, rm_bill!, rm_member!, ch_bill!, ch_member!
+# export igroupay, cmd_flow, gen_paygrp 
 
 # ---------------------------------- structs --------------------------------- #
 """
@@ -1009,86 +1009,81 @@ function print_greetings()
     println("We will provide you a payment solution for your group.")
 end
 
-function igroupay(shouldCheck=false)
-    # greetings
-    run(`clear`)
-    print_greetings()
-    # check saved group
-    if shouldCheck
-        println()
-        payGrp, gstatus = check_savedgroup()
-        if gstatus
-            return payGrp
-        end
-    end
-    # generate group
+# ---------------------------------------------------------------------------- #
+#                                   igroupay                                   #
+# ---------------------------------------------------------------------------- #
+shouldCheck = false
+# greetings
+run(`clear`)
+print_greetings()
+# check saved group
+if shouldCheck
     println()
-    payGrp = gen_paygrp()
-    if shouldCheck
-        println("And on today?([y]/n)")
-        onToday = readline()
-        if onToday == "n"
-            while true
-            println("So on which date? e.g., 2021-8-12")
-            insertDate = readline()
-            try
-                add_bills!(payGrp, insertDate)
-                break
-            catch
-                println("Wrong date format!")
-            end
-            end
-        else
-            payGrp = add_bills!(payGrp)
+    payGrp, gstatus = check_savedgroup()
+    if gstatus
+        exit()
+    end
+end
+# generate group
+println()
+payGrp = gen_paygrp()
+if shouldCheck
+    println("And on today?([y]/n)")
+    onToday = readline()
+    if onToday == "n"
+        while true
+        println("So on which date? e.g., 2021-8-12")
+        insertDate = readline()
+        try
+            add_bills!(payGrp, insertDate)
+            break
+        catch
+            println("Wrong date format!")
+        end
         end
     else
         payGrp = add_bills!(payGrp)
     end
-
-    # payment solution
-    print_soln(payGrp)
-    # save
-    if shouldCheck
-        println("\nDo you want to save your group?([y]/n)")
-        a = readline()
-        if a != "n"
-            save_paygrp(payGrp)
-            println("Group saved as $(colorstring("groupay.jld2", :path)) ^_^")
-        end
-    end
-    # show info
-    println("\nShow detailed information?([y]/n)")
-    willContinue = readline()
-    if willContinue == "n"
-        println("\nHave a good day ~")
-        exit()
-    end
-    # print bills
-    println("\nShow all the bills?([y]/n)")
-    a = readline()
-    if a != "n"
-       print_bill(payGrp)
-    end
-    # print bills of members
-    println("And show all the bills based on members?([y]/n)")
-    a = readline()
-    if a != "n"
-        print_member(payGrp)
-    end
-    # cmd flow
-    println("\nDo you want to enter command mode?([y]/n)")
-    a = readline()
-    if a != "n"
-        cmd_flow(payGrp)
-        println("\nHave a good day ~")
-        exit()
-    end
-    println("\nHave a good day ~")
-    return payGrp
+else
+    payGrp = add_bills!(payGrp)
 end
 
-end # module
-
-# run
-using .Groupay
-igroupay()
+# payment solution
+print_soln(payGrp)
+# save
+if shouldCheck
+    println("\nDo you want to save your group?([y]/n)")
+    a = readline()
+    if a != "n"
+        save_paygrp(payGrp)
+        println("Group saved as $(colorstring("groupay.jld2", :path)) ^_^")
+    end
+end
+# show info
+println("\nShow detailed information?([y]/n)")
+willContinue = readline()
+if willContinue == "n"
+    println("\nHave a good day ~")
+    exit()
+end
+# print bills
+println("\nShow all the bills?([y]/n)")
+a = readline()
+if a != "n"
+    print_bill(payGrp)
+end
+# print bills of members
+println("And show all the bills based on members?([y]/n)")
+a = readline()
+if a != "n"
+    print_member(payGrp)
+end
+# cmd flow
+println("\nDo you want to enter command mode?([y]/n)")
+a = readline()
+if a != "n"
+    cmd_flow(payGrp)
+    println("\nHave a good day ~")
+    exit()
+end
+println("\nHave a good day ~")

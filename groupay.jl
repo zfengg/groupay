@@ -1061,7 +1061,7 @@ function igroupay(shouldCheck=false)
     willContinue = readline()
     if willContinue == "n"
         println("\nHave a good day ~")
-        exit()
+        return payGrp
     end
     # print bills
     println("\nShow all the bills?([y]/n)")
@@ -1081,7 +1081,7 @@ function igroupay(shouldCheck=false)
     if a != "n"
         cmd_flow(payGrp)
         println("\nHave a good day ~")
-        exit()
+        return payGrp
     end
     println("\nHave a good day ~")
     return payGrp
