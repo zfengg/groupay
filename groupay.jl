@@ -716,8 +716,8 @@ function add_bills!(payGrp::PayGroup, insertDate::Date)
                     if ! isempty(AAlist)
                         break
                     end
-                    println(colorstring("Oops!", :error), " AA at least on one member!")
-                    println("Please input again:")
+                    println(colorstring("Oops!", :error), " No one is ", colorstring("AA", :aa), ".")
+                    println()
                 end
             else
                 AAlist = keys(payGrp.members)
