@@ -76,7 +76,7 @@ get_topay(m::Member) = get_shouldpay(m) - get_haspaid(m)
 get_total(g::PayGroup, d::Date) = haskey(g.bills, d) ? sum(b.total for b in values(g.bills[d])) : 0.
 get_total(g::PayGroup, d) = get_total(g, Date(d))
 
-# ----------------------------------- push ----------------------------------- #
+# ------------------------------ push_! & pop_! ------------------------------ #
 # function push_hasPaid!(m::Member, bn::String, v::Float64, d::Date)
 #     if haskey(m.hasPaid, d)
 #         push!(m.hasPaid[d], bn => v)
@@ -95,19 +95,19 @@ get_total(g::PayGroup, d) = get_total(g, Date(d))
 # end
 
 function push_bill!(g::PayGroup, b::Bill)
-    # g.bills
+    # bills
     if haskey(g.bills, b.date)
         push!(g.bills[b.date], b.billname => b)
     else
         push!(g.bills, b.date => Dict(b.billname => b))
     end
-    # m.hasPaid
+    # hasPaid
     if haskey(g.members[b.paidBy].hasPaid, b.date)
         push!(g.members[b.paidBy].hasPaid[b.date], b.billname => b.total)
     else
         push!(g.members[b.paidBy].hasPaid, b.date => Dict(b.billname => b.total))
     end
-    # m.shouldPay
+    # shouldPay
     for (m, v) in b.shouldPay  
         if haskey(g.members[m].shouldPay, b.date)
             push!(g.members[m].shouldPay[b.date], b.billname => v)
@@ -115,8 +115,7 @@ function push_bill!(g::PayGroup, b::Bill)
             push!(g.members[m].shouldPay, b.date => Dict(b.billname => v))
         end
     end
-     
-    # return g
+    return g
 end
 
 function pop_bill!(g::PayGroup, b::Bill)
@@ -126,7 +125,7 @@ function pop_bill!(g::PayGroup, b::Bill)
             pop!(g.bills, b.date)
         end
 
-        # m.hasPaid 
+        # hasPaid 
         pop!(g.members[b.paidBy].hasPaid[b.date], b.billname)
         if isempty(g.members[b.paidBy].hasPaid[b.date])
             pop!(g.members[b.paidBy].hasPaid, b.date)
