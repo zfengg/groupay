@@ -988,7 +988,7 @@ function add_bills!(payGrp::PayGroup, insertDate::Date)
                         println("Tip around ", colorstring("$avgTip", :tip), " for each member in this bill")
                         hasAddFirst = false
                         for m in keys(tmpBill.shouldPay)
-                            if ! hasAddFirst 
+                            if ! hasAddFirst
                                 tmpBill.shouldPay[m] += tmpTip - (tmpNumShouldPay - 1) * avgTip
                             else
                                 tmpBill.shouldPay[m] += avgTip
