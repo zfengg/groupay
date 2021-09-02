@@ -76,24 +76,7 @@ get_topay(m::Member) = get_shouldpay(m) - get_haspaid(m)
 get_total(g::PayGroup, d::Date) = haskey(g.bills, d) ? sum(b.total for b in values(g.bills[d])) : 0.
 get_total(g::PayGroup, d) = get_total(g, Date(d))
 
-# ------------------------------ push_! & pop_! ------------------------------ #
-# function push_hasPaid!(m::Member, bn::String, v::Float64, d::Date)
-#     if haskey(m.hasPaid, d)
-#         push!(m.hasPaid[d], bn => v)
-#     else
-#         push!(m.hasPaid, d => Dict(bn => v))
-#     end
-#     # return m
-# end
-# function push_shouldPay!(m::Member, bn::String, v::Float64, d::Date)
-#     if haskey(m.shouldPay, d)
-#         push!(m.shouldPay[d], bn => v)
-#     else
-#         push!(m.shouldPay, d => Dict(bn => v))
-#     end
-#     # return m
-# end
-
+# -------------------------- push_bill! & pop_bill! -------------------------- #
 function push_bill!(g::PayGroup, b::Bill)
     # bills
     if haskey(g.bills, b.date)
@@ -141,7 +124,6 @@ function pop_bill!(g::PayGroup, b::Bill)
 end
 
 # ----------------------------------- print ---------------------------------- #
-# dictionary of colors
 const COLORS = Dict(
     :red => "\033[31m",
     :green => "\033[32m",
@@ -181,9 +163,22 @@ function print_invalid_date(d)
     println(colorstring("Invalid DateFormat: ", :error), colorstring("$d", :date), " is not a valid date format!")
     println("Please input date like ", colorstring("$(today())", :tip))
 end
+
 print_not_member(m::String) = println("Sorry, ", colorstring(m, :member), " is not in your group!")
 
+function hasbill(g::PayGroup, bn::String, d::Date=today())
+    if ! haskey(g.bills, d)
+        println("No bills on ", colorstring("$d", :date))
+        return false
+    end
+    if ! haskey(g.bills[d], bn)
+        println("No bill with name ", colorstring(bn, :bill), " on ", colorstring("$d", :date))
+        return false
+    end
+    return true
+end
 
+# print member
 """
     print_member(m::Member, d::Date)
 
@@ -268,6 +263,7 @@ function print_member_today(g::PayGroup)
     end
 end
 
+# print meta
 """
     print_meta_info(g::PayGroup)
 
@@ -308,6 +304,7 @@ function print_meta_bills(g::PayGroup)
     end
 end
 
+# print bill
 """
     print_bill(bill::Bill)
 
@@ -360,21 +357,10 @@ function print_bill(g::PayGroup)
     println("======\n")
 end
 
-# TODO: whether print in hasbill()
-function hasbill(g::PayGroup, bn::String, d::Date=today())
-    if ! haskey(g.bills, d)
-        println("No bills on ", colorstring("$d", :date))
-        return false
-    end
-    if ! haskey(g.bills[d], bn)
-        println("No bill with name ", colorstring(bn, :bill), " on ", colorstring("$d", :date))
-        return false
-    end
-    return true
-end
 
 function print_bill(g::PayGroup, bn::String, d::Date)
     if hasbill(g, bn, d)
+        println(colorstring("$d", :date))
         print_bill(g.bills[d][bn])
     end
 end
@@ -388,19 +374,6 @@ end
 
 print_bill_today(g::PayGroup) = print_bill(g, today())
 print_bill_today(g::PayGroup, bn::String) = print_bill(g, bn, today())
-# function print_bill_today(g::PayGroup, bn::String)
-#     d = today()
-#     if ! haskey(g.bills, d)
-#         println(colorstring("$(today())", :date), " has no bills!")
-#         return nothing
-#     end
-#     if ! haskey(g.bills[d], bn)
-#         println(colorstring("$(today())", :date), " has no bill with name ", colorstring(bn, :bill))
-#         return nothing
-#     end
-#     println(colorstring("$(today())", :date))
-#     print_bill(g.bills[d][bn])
-# end
 
 function print_billbyname(g::PayGroup, bn::String)
    hasBill = false
@@ -520,20 +493,6 @@ function read_valid_member(g::PayGroup)
 end
 
 # ------------------------------------ ch ------------------------------------ #
-# function add_bill!(g::PayGroup, bn::String, d::Date=today(), isSingle::Bool=false)
-#     if isSingle
-
-#     else
-#     end
-# end
-
-# function greet_members(g::PayGroup)
-#     println("Nice to meet you!")
-#     for m in keys(g.members)
-#         println(colorstring(m, :member))
-#     end
-# end
-
 function ch_bill!(g::PayGroup, bn::String, d::Date=today())
     if ! hasbill(g, bn, d)
        return nothing
@@ -703,7 +662,7 @@ function ch_member!(g::PayGroup, m::String, nn::String)
         return nothing
     end
     if m == nn
-        println("The same name. Nothing changed!") 
+        println("The same name. Nothing changed!")
         return nothing
     end
     member = g.members[m]
@@ -787,7 +746,7 @@ function add_member!(g::PayGroup)
     end
 
     for name in addMembers
-        if haskey(g.members, name) 
+        if haskey(g.members, name)
             println(colorstring(name, :member), " already in the group.")
             continue
         end
@@ -833,8 +792,7 @@ function add_bills!(payGrp::PayGroup, insertDate::Date)
             # meta info
             billname = readline()
             while isempty(billname)
-                # println("It's better to give the bill a name, right? ^o^")
-                println("Please give your bill a name:")
+                println("Please name your bill:")
                 billname = readline()
             end
             if haskey(payGrp.bills, insertDate) && haskey(payGrp.bills[insertDate], billname)
@@ -1008,13 +966,41 @@ function add_bills!(payGrp::PayGroup, insertDate::Date)
                             print(colorstring(name, :member), " : ")
                         end
                     end
+                    if tmpShouldPay == 0
+                        tmpShouldPay = undef
+                    end
                     tmpShouldPay != undef && push!(tmpBill.shouldPay, name => tmpShouldPay)
                 end
-
-                if tmpBill.total != sum(values(tmpBill.shouldPay))
-                    println()
-                    println("Oops! The sum of money doesn't match the total ", colorstring("$(tmpBill.total)", :warning), "!")
-                    println("Please input again.")
+                tmpSum = sum(values(tmpBill.shouldPay))
+                if tmpBill.total != tmpSum
+                    println("\nOops! Sum=", colorstring("$tmpSum", :error), " does not match Total=",
+                            colorstring("$(tmpBill.total)", :warning), "\n")
+                    tmpTip = tmpBill.total - tmpSum
+                    if tmpTip < 0
+                        continue
+                    end
+                    tmpTipPercents = 100 * round(tmpTip/tmpSum, digits=3)
+                    println("Is Total - Sum = ", colorstring("$tmpTip ($tmpTipPercents %)", :tip) ," your tip?([y]/n)")
+                    a = readline()
+                    if a != "n"
+                        tmpNumShouldPay = length(tmpBill.shouldPay)
+                        avgTip = tmpTip / tmpNumShouldPay
+                        println("Tip around ", colorstring("$avgTip", :tip), " for each member in this bill")
+                        hasAddFirst = false
+                        for m in keys(tmpBill.shouldPay)
+                            if ! hasAddFirst 
+                                tmpBill.shouldPay[m] += tmpTip - (tmpNumShouldPay - 1) * avgTip
+                            else
+                                tmpBill.shouldPay[m] += avgTip
+                            end
+                        end
+                        if sum(values(tmpBill.shouldPay)) == tmpBill.total
+                            bill = tmpBill
+                            break
+                        else
+                            println("Rounding error exits!")
+                        end
+                    end
                 else
                     bill = tmpBill
                     break
