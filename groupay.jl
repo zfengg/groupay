@@ -1200,6 +1200,7 @@ end
 print_manual() = print_manual(MANUAL)
 
 print_invalid_cmd() = println(colorstring("Invalid", :error), " command!")
+
 function exec_cmd(g::PayGroup, nextCmd)
     nextCmd = split(nextCmd)
     nextCmd = String.(nextCmd)
