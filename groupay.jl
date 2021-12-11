@@ -512,12 +512,14 @@ function ch_bill!(g::PayGroup, bn::String, d::Date = today())
         newBillname = undef
         while true
             newBillname = read_nonempty_string()
+            newBillname = split(newBillname)[1] |> String
             if !haskey(g.bills[d], newBillname)
                 break
             end
             println(colorstring(newBillname, :bill), " already exists on ", colorstring("$d", :date))
             prinlln("Please input again:")
         end
+        println("New name: ", colorstring(newBillname, :bill))
     end
 
     println("Change the ", colorstring("payment", :tip), " details?([y]/n)")
@@ -600,10 +602,39 @@ function ch_bill!(g::PayGroup, bn::String, d::Date = today())
                 tmpShouldPay != undef && push!(tmpBill.shouldPay, m => tmpShouldPay)
             end
 
-            if tmpBill.total != sum(values(tmpBill.shouldPay))
-                println()
-                println("Oops! The sum of money doesn't match the total ", colorstring("$(tmpBill.total)", :warning), "!")
-                println("Please input again.")
+            tmpSum = sum(values(tmpBill.shouldPay))
+            if tmpBill.total != tmpSum
+                println("\nOops! Sum=", colorstring("$tmpSum", :error), " does not match Total=",
+                    colorstring("$(tmpBill.total)", :warning), "\n")
+                tmpTip = tmpBill.total - tmpSum
+                if tmpTip < 0
+                    continue
+                end
+                tmpTipPercents = 100 * round(tmpTip / tmpSum, digits = 3)
+                println("Is Total - Sum = ", colorstring("$tmpTip ($tmpTipPercents %)", :tip), " your tip?([y]/n)")
+                a = readline()
+                if a != "n"
+                    tmpNumShouldPay = length(tmpBill.shouldPay)
+                    println(colorstring("Tips", :tip), " for each member:")
+                    accumTip = 0
+                    countMemberTip = 0
+                    for (m, v) in tmpBill.shouldPay
+                        countMemberTip += 1
+                        tmpMemberTip = tmpTip * v / tmpSum
+                        if countMemberTip == tmpNumShouldPay
+                            tmpMemberTip = tmpTip - accumTip
+                        end
+                        tmpBill.shouldPay[m] += tmpMemberTip
+                        accumTip += tmpMemberTip
+                        print_member_tip(m, tmpMemberTip)
+                    end
+                    if sum(values(tmpBill.shouldPay)) == tmpBill.total
+                        newBill = tmpBill
+                        break
+                    else
+                        println("Rounding error exits!")
+                    end
+                end
             else
                 newBill = tmpBill
                 break
@@ -650,9 +681,9 @@ function ch_bill!(g::PayGroup, bn::String, d::Date = today())
     print_bill(newBill)
     return g
 end
-function ch_bill!(g::PayGroup, bn::String, d)
+function ch_bill_cmd!(g::PayGroup, bn::String, d)
     try
-        ch_bill!(g::PayGroup, bn::String, d)
+        ch_bill!(g::PayGroup, bn::String, Date(d))
     catch
         print_invalid_date(d)
     end
@@ -701,9 +732,9 @@ function rm_bill!(g::PayGroup, bn::String, d::Date = today())
     end
     return g
 end
-function rm_bill!(g::PayGroup, bn::String, d)
+function rm_bill_cmd!(g::PayGroup, bn::String, d)
     try
-        rm_bill!(g::PayGroup, bn::String, d)
+        rm_bill!(g::PayGroup, bn::String, Date(d))
     catch
         print_invalid_date(d)
     end
@@ -1263,7 +1294,7 @@ function exec_cmd(g::PayGroup, nextCmd)
         end
     elseif headCmd == "cb"
         if lenCmd >= 3
-            ch_bills!(g, nextCmd[2], nextCmd[3])
+            ch_bill_cmd!(g, nextCmd[2], nextCmd[3])
         elseif lenCmd >= 2
             ch_bill!(g, nextCmd[2])
         else
@@ -1271,7 +1302,7 @@ function exec_cmd(g::PayGroup, nextCmd)
         end
     elseif headCmd == "rb"
         if lenCmd >= 3
-            rm_bill!(g, nextCmd[2], nextCmd[3])
+            rm_bill_cmd!(g, nextCmd[2], nextCmd[3])
         elseif lenCmd >= 2
             rm_bill!(g, nextCmd[2])
         else
