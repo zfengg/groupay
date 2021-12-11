@@ -16,7 +16,7 @@ using Dates
 
 export Bill, Member, PayGroup
 export print_member, print_bill, print_soln, print_meta_info,
-        print_bill_today, print_member_today, print_billbyname
+    print_bill_today, print_member_today, print_billbyname
 export add_bills!, add_member!, rm_bill!, rm_member!, ch_bill!, ch_member!
 export igroupay, cmd_flow, gen_paygrp
 
@@ -30,7 +30,7 @@ mutable struct Bill
     total::Float64
     isAA::Bool
     paidBy::String
-    shouldPay::Dict{String, Float64}
+    shouldPay::Dict{String,Float64}
     Bill(bill::Bill) = new(bill.billname, bill.date, bill.total, bill.isAA, bill.paidBy, Dict())
     Bill(bn::String, d::Date) = new(bn, d, NaN, true, "", Dict())
 end
@@ -40,8 +40,8 @@ end
 """
 mutable struct Member
     name::String
-    shouldPay::Dict{Date, Dict{String}{Float64}}
-    hasPaid::Dict{Date, Dict{String}{Float64}}
+    shouldPay::Dict{Date,Dict{String}{Float64}}
+    hasPaid::Dict{Date,Dict{String}{Float64}}
     Member(m::String) = new(m, Dict(), Dict())
 end
 
@@ -52,28 +52,28 @@ The object contains all the information about group payment.
 """
 mutable struct PayGroup
     title::String
-    members::Dict{String, Member}
-    bills::Dict{Date, Dict{String, Bill}}
+    members::Dict{String,Member}
+    bills::Dict{Date,Dict{String,Bill}}
     PayGroup(title::String) = new(title, Dict(), Dict())
 end
 
 # ------------------------------------ get ----------------------------------- #
-get_haspaid(m::Member, d::Date) = haskey(m.hasPaid, d) ? sum(values(m.hasPaid[d])) : 0.
+get_haspaid(m::Member, d::Date) = haskey(m.hasPaid, d) ? sum(values(m.hasPaid[d])) : 0.0
 get_haspaid(m::Member, d) = get_haspaid(m, Date(d))
 get_haspaid(g::PayGroup, m::String, d) = get_haspaid(g.members[m], d)
-get_haspaid(m::Member) = isempty(m.hasPaid) ? 0. : sum(v for d in keys(m.hasPaid) for v in values(m.hasPaid[d]))
+get_haspaid(m::Member) = isempty(m.hasPaid) ? 0.0 : sum(v for d in keys(m.hasPaid) for v in values(m.hasPaid[d]))
 
-get_shouldpay(m::Member, d::Date) = haskey(m.shouldPay, d) ? sum(values(m.shouldPay[d])) : 0.
+get_shouldpay(m::Member, d::Date) = haskey(m.shouldPay, d) ? sum(values(m.shouldPay[d])) : 0.0
 get_shouldpay(m::Member, d) = get_shouldpay(m, Date(d))
 get_shouldpay(g::PayGroup, m::String, d) = get_shouldpay(g.members[m], d)
-get_shouldpay(m::Member) = isempty(m.shouldPay) ? 0. : sum(v for d in keys(m.shouldPay) for v in values(m.shouldPay[d]))
+get_shouldpay(m::Member) = isempty(m.shouldPay) ? 0.0 : sum(v for d in keys(m.shouldPay) for v in values(m.shouldPay[d]))
 
 get_topay(m::Member, d::Date) = get_shouldpay(m, d) - get_haspaid(m, d)
 get_topay(m::Member, d) = get_topay(m, Date(d))
-get_topay(g::PayGroup, m::String, d) = get_shouldpay(g, m, d) -get_haspaid(g, m, d)
+get_topay(g::PayGroup, m::String, d) = get_shouldpay(g, m, d) - get_haspaid(g, m, d)
 get_topay(m::Member) = get_shouldpay(m) - get_haspaid(m)
 
-get_total(g::PayGroup, d::Date) = haskey(g.bills, d) ? sum(b.total for b in values(g.bills[d])) : 0.
+get_total(g::PayGroup, d::Date) = haskey(g.bills, d) ? sum(b.total for b in values(g.bills[d])) : 0.0
 get_total(g::PayGroup, d) = get_total(g, Date(d))
 
 # -------------------------- push_bill! & pop_bill! -------------------------- #
@@ -166,12 +166,14 @@ end
 
 print_not_member(m::String) = println("Sorry, ", colorstring(m, :member), " is not in your group!")
 
-function hasbill(g::PayGroup, bn::String, d::Date=today())
-    if ! haskey(g.bills, d)
+print_member_tip(m::String, t::Float64) = println(colorstring(m, :member), " : ", t)
+
+function hasbill(g::PayGroup, bn::String, d::Date = today())
+    if !haskey(g.bills, d)
         println("No bills on ", colorstring("$d", :date))
         return false
     end
-    if ! haskey(g.bills[d], bn)
+    if !haskey(g.bills[d], bn)
         println("No bill with name ", colorstring(bn, :bill), " on ", colorstring("$d", :date))
         return false
     end
@@ -184,7 +186,7 @@ end
 
 Print payment information of `m` on `d`.
 """
-function print_member(m::Member, d::Date, showName::Bool=true)
+function print_member(m::Member, d::Date, showName::Bool = true)
     if showName
         println("[", colorstring(m.name, :member), "]")
     end
@@ -215,7 +217,7 @@ function print_member(m::Member, d::Date, showName::Bool=true)
     return nothing
 end
 
-function print_member(m::Member, d, showName::Bool=true)
+function print_member(m::Member, d, showName::Bool = true)
     try
         print_member(m, Date(d), showName)
     catch
@@ -276,7 +278,7 @@ function print_meta_info(g::PayGroup)
         print(m, " ")
     end
     print("$(COLORS[:nc])\n")
-    if ! isempty(g.bills)
+    if !isempty(g.bills)
         println("Total: $(COLORS[:total])", sum(b.total for d in keys(g.bills) for b in values(g.bills[d])), "$(COLORS[:nc])")
     end
 end
@@ -312,7 +314,7 @@ Print the information of bills.
 """
 function print_bill(b::Bill)
     println("[", colorstring(b.billname, :bill), "]")
-    println("total = ", colorstring("$(b.total)", :total), " paid by ", colorstring(b.paidBy, :member),";")
+    println("total = ", colorstring("$(b.total)", :total), " paid by ", colorstring(b.paidBy, :member), ";")
     if b.isAA
         println("-- ", colorstring("AA", :aa), " --")
     else
@@ -323,7 +325,7 @@ function print_bill(b::Bill)
     end
 end
 function print_bill(g::PayGroup, d::Date)
-    if ! haskey(g.bills, d)
+    if !haskey(g.bills, d)
         println(colorstring("$d", :date), " has ", colorstring("no bills", :warning))
         return nothing
     end
@@ -376,16 +378,16 @@ print_bill_today(g::PayGroup) = print_bill(g, today())
 print_bill_today(g::PayGroup, bn::String) = print_bill(g, bn, today())
 
 function print_billbyname(g::PayGroup, bn::String)
-   hasBill = false
-   for d in keys(g.bills)
-      if haskey(g.bills[d], bn)
-        hasBill = true
-        println(colorstring("$d", :date))
-        print_bill(g.bills[d][bn])
-        println()
-      end
-   end
-   hasBill || println("Oops, ", colorstring(bn, :bill), " is not your bill!")
+    hasBill = false
+    for d in keys(g.bills)
+        if haskey(g.bills[d], bn)
+            hasBill = true
+            println(colorstring("$d", :date))
+            print_bill(g.bills[d][bn])
+            println()
+        end
+    end
+    hasBill || println("Oops, ", colorstring(bn, :bill), " is not your bill!")
 end
 
 """
@@ -411,11 +413,11 @@ Generate a `PayGroup` interactively.
 """
 function gen_paygrp()
     println("What's the name of your group?")
-    title = readline()
+    title = readline() |> strip |> String
     while isempty(title)
         println("Why not name your group? ^o^")
         println("Please give it a nice name:")
-        title = readline()
+        title = readline() |> strip |> String
     end
     payGrp = PayGroup(title)
     println("And who are in the group ", colorstring(title, :group), "?")
@@ -454,10 +456,10 @@ end
 
 # ----------------------------------- read ----------------------------------- #
 function read_nonempty_string()
-    s = readline()
+    s = readline() |> strip |> String
     while isempty(s)
         println(colorstring("Empty", :warning), " string is not good.")
-        s = readline()
+        s = readline() |> strip |> String
     end
     return s
 end
@@ -493,9 +495,9 @@ function read_valid_member(g::PayGroup)
 end
 
 # ------------------------------------ ch ------------------------------------ #
-function ch_bill!(g::PayGroup, bn::String, d::Date=today())
-    if ! hasbill(g, bn, d)
-       return nothing
+function ch_bill!(g::PayGroup, bn::String, d::Date = today())
+    if !hasbill(g, bn, d)
+        return nothing
     end
 
     oldBill = g.bills[d][bn]
@@ -510,7 +512,7 @@ function ch_bill!(g::PayGroup, bn::String, d::Date=today())
         newBillname = undef
         while true
             newBillname = read_nonempty_string()
-            if ! haskey(g.bills[d], newBillname)
+            if !haskey(g.bills[d], newBillname)
                 break
             end
             println(colorstring(newBillname, :bill), " already exists on ", colorstring("$d", :date))
@@ -625,7 +627,7 @@ function ch_bill!(g::PayGroup, bn::String, d::Date=today())
                         push!(AAlist, m)
                     end
                 end
-                if ! isempty(AAlist)
+                if !isempty(AAlist)
                     break
                 end
                 println(colorstring("Oops!", :error), " No one is ", colorstring("AA", :aa), "!")
@@ -657,7 +659,7 @@ function ch_bill!(g::PayGroup, bn::String, d)
 end
 
 function ch_member!(g::PayGroup, m::String, nn::String)
-    if ! haskey(g.members, m)
+    if !haskey(g.members, m)
         print_not_member(m)
         return nothing
     end
@@ -684,8 +686,8 @@ function ch_member!(g::PayGroup, m::String, nn::String)
 end
 
 # ------------------------------------ rm ------------------------------------ #
-function rm_bill!(g::PayGroup, bn::String, d::Date=today())
-    if ! hasbill(g, bn, d)
+function rm_bill!(g::PayGroup, bn::String, d::Date = today())
+    if !hasbill(g, bn, d)
         return nothing
     end
     println("The following bill will be ", colorstring("removed", :danger), ":")
@@ -779,22 +781,23 @@ function add_bills!(payGrp::PayGroup, insertDate::Date)
             payMan = x
         end
 
-        if ! isempty(payGrp.bills)
+        if !isempty(payGrp.bills)
             println("And you have added the following bills:")
             print_meta_bills(payGrp)
-            println("\nWhat's your next bill to add", isToday ? "" :  " on " * colorstring("$insertDate", :date), "?")
+            println("\nWhat's your next bill to add", isToday ? "" : " on " * colorstring("$insertDate", :date), "?")
         else
             println("Then let's review your bills together.")
-            println("\nWhat's your first bill to add", isToday ? "" :  " on " * colorstring("$insertDate", :date), "?")
+            println("\nWhat's your first bill to add", isToday ? "" : " on " * colorstring("$insertDate", :date), "?")
         end
 
         while true
             # meta info
-            billname = readline()
+            billname = strip(readline()) |> String
             while isempty(billname)
                 println("Please name your bill:")
-                billname = readline()
+                billname = strip(readline()) |> String
             end
+            billname = split(billname)[1] |> String
             if haskey(payGrp.bills, insertDate) && haskey(payGrp.bills[insertDate], billname)
                 for m in values(payGrp.members)
                     if haskey(m.hasPaid, insertDate) && haskey(m.hasPaid[insertDate], billname)
@@ -870,22 +873,23 @@ function add_bills!(payGrp::PayGroup, insertDate::Date)
     for x in keys(payGrp.members)
         println(colorstring(x, :member))
     end
-    if ! isempty(payGrp.bills)
+    if !isempty(payGrp.bills)
         println("And you have added the following bills:")
         print_meta_bills(payGrp)
-        println("\nWhat's your next bill to add", isToday ? "" :  " on " * colorstring("$insertDate", :date), "?")
+        println("\nWhat's your next bill to add", isToday ? "" : " on " * colorstring("$insertDate", :date), "?")
     else
         println("Then let's review your bills together.")
-        println("\nWhat's your first bill to add", isToday ? "" :  " on " * colorstring("$insertDate", :date), "?")
+        println("\nWhat's your first bill to add", isToday ? "" : " on " * colorstring("$insertDate", :date), "?")
     end
 
     while true
         # meta info
-        billname = readline()
+        billname = strip(readline()) |> String
         while isempty(billname)
             println("Please name your bill:")
-            billname = readline()
+            billname = strip(readline()) |> String
         end
+        billname = split(billname)[1] |> String
         if haskey(payGrp.bills, insertDate) && haskey(payGrp.bills[insertDate], billname)
             for m in values(payGrp.members)
                 if haskey(m.hasPaid, insertDate) && haskey(m.hasPaid[insertDate], billname)
@@ -896,7 +900,7 @@ function add_bills!(payGrp::PayGroup, insertDate::Date)
                 end
                 if haskey(m.shouldPay, insertDate) && haskey(m.shouldPay[insertDate], billname)
                     pop!(m.shouldPay[insertDate], billname)
-                if isempty(m.shouldPay[insertDate])
+                    if isempty(m.shouldPay[insertDate])
                         pop!(m.shouldPay, insertDate)
                     end
                 end
@@ -907,7 +911,8 @@ function add_bills!(payGrp::PayGroup, insertDate::Date)
         println("Who pays ", colorstring(billname, :bill), "?")
         payMan = undef
         while true
-            payMan = readline()
+            # payMan = split(readline())[1] |> String
+            payMan = strip(readline()) |> String
             if payMan in keys(payGrp.members)
                 break
             else
@@ -974,25 +979,28 @@ function add_bills!(payGrp::PayGroup, insertDate::Date)
                 tmpSum = sum(values(tmpBill.shouldPay))
                 if tmpBill.total != tmpSum
                     println("\nOops! Sum=", colorstring("$tmpSum", :error), " does not match Total=",
-                            colorstring("$(tmpBill.total)", :warning), "\n")
+                        colorstring("$(tmpBill.total)", :warning), "\n")
                     tmpTip = tmpBill.total - tmpSum
                     if tmpTip < 0
                         continue
                     end
-                    tmpTipPercents = 100 * round(tmpTip/tmpSum, digits=3)
-                    println("Is Total - Sum = ", colorstring("$tmpTip ($tmpTipPercents %)", :tip) ," your tip?([y]/n)")
+                    tmpTipPercents = 100 * round(tmpTip / tmpSum, digits = 3)
+                    println("Is Total - Sum = ", colorstring("$tmpTip ($tmpTipPercents %)", :tip), " your tip?([y]/n)")
                     a = readline()
                     if a != "n"
                         tmpNumShouldPay = length(tmpBill.shouldPay)
-                        avgTip = tmpTip / tmpNumShouldPay
-                        println("Tip around ", colorstring("$avgTip", :tip), " for each member in this bill")
-                        hasAddFirst = false
-                        for m in keys(tmpBill.shouldPay)
-                            if ! hasAddFirst
-                                tmpBill.shouldPay[m] += tmpTip - (tmpNumShouldPay - 1) * avgTip
-                            else
-                                tmpBill.shouldPay[m] += avgTip
+                        println(colorstring("Tips", :tip), " for each member:")
+                        accumTip = 0
+                        countMemberTip = 0
+                        for (m, v) in tmpBill.shouldPay
+                            countMemberTip += 1
+                            tmpMemberTip = tmpTip * v / tmpSum
+                            if countMemberTip == tmpNumShouldPay
+                                tmpMemberTip = tmpTip - accumTip
                             end
+                            tmpBill.shouldPay[m] += tmpMemberTip
+                            accumTip += tmpMemberTip
+                            print_member_tip(m, tmpMemberTip)
                         end
                         if sum(values(tmpBill.shouldPay)) == tmpBill.total
                             bill = tmpBill
@@ -1023,7 +1031,7 @@ function add_bills!(payGrp::PayGroup, insertDate::Date)
                             push!(AAlist, name)
                         end
                     end
-                    if ! isempty(AAlist)
+                    if !isempty(AAlist)
                         break
                     end
                     println(colorstring("Oops!", :error), " No one is ", colorstring("AA", :aa), "!")
@@ -1102,14 +1110,14 @@ function gen_soln(payGrp::PayGroup)
         return [("Everyone", "happy", 0)]
     end
 
-    payers = sort(payers; by=x -> x[2])
-    receivers = sort(receivers; by=x -> x[2])
+    payers = sort(payers; by = x -> x[2])
+    receivers = sort(receivers; by = x -> x[2])
     if abs(sum(map(x -> x[2], payers)) - sum(map(x -> x[2], receivers))) > 0.01
         println("Source does NOT match sink!")
     end
 
     soln = []
-    while ! isempty(receivers)
+    while !isempty(receivers)
         tmpPayer = payers[end]
         tmpReceiver = receivers[end]
         tmpDiff = tmpPayer[2] - tmpReceiver[2]
@@ -1120,7 +1128,7 @@ function gen_soln(payGrp::PayGroup)
         elseif tmpDiff < -0.001
             push!(soln, (tmpPayer[1], tmpReceiver[1], tmpPayer[2]))
             pop!(payers)
-            receivers[end] = (tmpReceiver[1], - tmpDiff)
+            receivers[end] = (tmpReceiver[1], -tmpDiff)
         else
             push!(soln, (tmpPayer[1], tmpReceiver[1], tmpPayer[2]))
             pop!(payers)
@@ -1178,7 +1186,7 @@ function print_man_element(cmd)
     println("  ", colorstring(cmd[1], :cmd), " : ", cmd[2])
 end
 
-function print_manual(man, t::String="Command Manual")
+function print_manual(man, t::String = "Command Manual")
     println(colorstring(t, :manual), ":")
     print_man_element.(man)
     println("Get help by ", colorstring("h", :green), "; quit by ", colorstring("q", :red), "\n")
@@ -1263,7 +1271,7 @@ function exec_cmd(g::PayGroup, nextCmd)
         end
     elseif headCmd == "rb"
         if lenCmd >= 3
-            rm_bills!(g, nextCmd[2], nextCmd[3])
+            rm_bill!(g, nextCmd[2], nextCmd[3])
         elseif lenCmd >= 2
             rm_bill!(g, nextCmd[2])
         else
@@ -1275,14 +1283,14 @@ function exec_cmd(g::PayGroup, nextCmd)
         else
             println("Please input member to change name.")
         end
-    # elseif headCmd == "sg"
-    #     save_paygrp(g)
-    #     println("Group saved!")
-    # elseif headCmd == "lg"
-    #     load_paygrp("groupay.jld2")
-    # elseif headCmd == "dg"
-    #     rm("groupay.jld2")
-    #     println("\e[31mgroupap.jl\e[0m deleted!")
+        # elseif headCmd == "sg"
+        #     save_paygrp(g)
+        #     println("Group saved!")
+        # elseif headCmd == "lg"
+        #     load_paygrp("groupay.jld2")
+        # elseif headCmd == "dg"
+        #     rm("groupay.jld2")
+        #     println("\e[31mgroupap.jl\e[0m deleted!")
     else
         print_invalid_cmd()
     end
@@ -1295,7 +1303,7 @@ execute commands recursively
 function cmd_flow(g::PayGroup)
     print_manual()
     shouldExit = false
-    while ! shouldExit
+    while !shouldExit
         println("What's next? ($(colorstring("h", :green)) to help; $(colorstring("q", :red)) to quit)")
         nextCmd = readline()
         println()
@@ -1358,7 +1366,7 @@ function print_greetings()
     println("We will provide you a payment solution for your group.")
 end
 
-function igroupay(shouldCheck=false)
+function igroupay(shouldCheck = false)
     # greetings
     run(`clear`)
     print_greetings()
@@ -1378,14 +1386,14 @@ function igroupay(shouldCheck=false)
         onToday = readline()
         if onToday == "n"
             while true
-            println("So on which date? e.g., 2021-8-12")
-            insertDate = readline()
-            try
-                add_bills!(payGrp, insertDate)
-                break
-            catch
-                println("Wrong date format!")
-            end
+                println("So on which date? e.g., 2021-8-12")
+                insertDate = readline()
+                try
+                    add_bills!(payGrp, insertDate)
+                    break
+                catch
+                    println("Wrong date format!")
+                end
             end
         else
             payGrp = add_bills!(payGrp)
@@ -1416,7 +1424,7 @@ function igroupay(shouldCheck=false)
     println("\nShow all the bills?([y]/n)")
     a = readline()
     if a != "n"
-       print_bill(payGrp)
+        print_bill(payGrp)
     end
     # print bills of members
     println("And show all the bills based on members?([y]/n)")
