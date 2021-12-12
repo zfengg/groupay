@@ -1487,7 +1487,3 @@ function igroupay(shouldCheck = false)
 end
 
 end # module
-
-# run
-using .Groupay
-igroupay()

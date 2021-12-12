@@ -1,0 +1,10 @@
+name = "Groupay"
+uuid = "8ca8c290-89c9-4f27-9d3a-7e8954e27fe3"
+authors = ["zfengg <42152221+zfengg@users.noreply.github.com>"]
+version = "0.1.0"
+
+[deps]
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
+
+[compat]
+julia = "1"
